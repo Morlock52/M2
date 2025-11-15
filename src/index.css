@@ -1,0 +1,26 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white min-h-screen;
+  }
+}
+
+@layer utilities {
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400;
+  }
+  
+  .gradient-border {
+    position: relative;
+    background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+    border-radius: 0.5rem;
+    padding: 2px;
+  }
+  
+  .gradient-border-content {
+    @apply bg-slate-900 rounded-lg p-6;
+  }
+}
