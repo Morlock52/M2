@@ -57,7 +57,10 @@
                 secrets.
               </p>
             </div>
-            <button id="autoFill" class="ghost">Auto-fill safe defaults</button>
+            <div class="actions">
+              <button id="loadSample" class="primary">Load sample stack</button>
+              <button id="autoFill" class="ghost">Auto-fill safe defaults</button>
+            </div>
           </div>
           <div class="grid two-col">
             <label class="field">
@@ -196,6 +199,11 @@
               <button id="copyEnv" class="ghost">Copy .env</button>
               <button id="downloadEnv" class="primary">Download .env</button>
             </div>
+          </div>
+          <div class="callout">
+            <strong>Integration tip:</strong> the shared API key defaults to
+            <code>m2-shared-token</code> and can be reused by Overseerr,
+            Prowlarr, and your automation scripts when connecting services.
           </div>
           <div id="envForm" class="env-form"></div>
           <pre id="envPreview" class="preview"></pre>
