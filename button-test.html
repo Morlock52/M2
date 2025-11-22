@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Button Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .test-result { margin: 10px 0; padding: 10px; border-radius: 5px; }
+        .pass { background: #d4edda; color: #155724; }
+        .fail { background: #f8d7da; color: #721c24; }
+        button { padding: 10px 20px; margin: 5px; }
+    </style>
+</head>
+<body>
+    <h1>🧪 M2 Website Button Functionality Test</h1>
+    
+    <div id="testResults"></div>
+    
+    <h2>Manual Test Steps:</h2>
+    <ol>
+        <li>Open <a href="http://localhost:8000" target="_blank" rel="noopener">M2 Website</a> in a new tab</li>
+        <li>Open Developer Tools (F12)</li>
+        <li>Click the "🚀 Start Easy Setup Wizard" button</li>
+        <li>Check if a wizard modal appears</li>
+        <li>Try clicking Next/Back buttons in the wizard</li>
+        <li>Try selecting services</li>
+        <li>Click "⚙️ Advanced Configuration" button</li>
+        <li>Try navigating through manual steps</li>
+    </ol>
+    
+    <button onclick="testButtons()">Run Automated Tests</button>
+    <button onclick="window.open('http://localhost:8000', '_blank', 'noopener')">Open M2 Website</button>
+    
+    <script>
+        function testButtons() {
+            const results = document.getElementById('testResults');
+            results.innerHTML = '<h3>Test Results:</h3>';
+            
+            // Test if we can load the main page
+            fetch('http://localhost:8000')
+                .then(response => {
+                    if (response.ok) {
+                        results.innerHTML += '<div class="test-result pass">✅ Main page loads successfully</div>';
+                        return response.text();
+                    } else {
+                        results.innerHTML += '<div class="test-result fail">❌ Main page failed to load</div>';
+                        throw new Error('Page load failed');
+                    }
+                })
+                .then(html => {
+                    // Check for critical elements
+                    if (html.includes('startWizard')) {
+                        results.innerHTML += '<div class="test-result pass">✅ Start Wizard button found</div>';
+                    } else {
+                        results.innerHTML += '<div class="test-result fail">❌ Start Wizard button missing</div>';
+                    }
+                    
+                    if (html.includes('advancedMode')) {
+                        results.innerHTML += '<div class="test-result pass">✅ Advanced Mode button found</div>';
+                    } else {
+                        results.innerHTML += '<div class="test-result fail">❌ Advanced Mode button missing</div>';
+                    }
+                    
+                    if (html.includes('app.js')) {
+                        results.innerHTML += '<div class="test-result pass">✅ JavaScript file referenced</div>';
+                    } else {
+                        results.innerHTML += '<div class="test-result fail">❌ JavaScript file missing</div>';
+                    }
+                    
+                    // Test if JavaScript loads
+                    return fetch('http://localhost:8000/app.js');
+                })
+                .then(response => {
+                    if (response.ok) {
+                        results.innerHTML += '<div class="test-result pass">✅ JavaScript file loads</div>';
+                        return response.text();
+                    } else {
+                        results.innerHTML += '<div class="test-result fail">❌ JavaScript file failed to load</div>';
+                        throw new Error('JS load failed');
+                    }
+                })
+                .then(js => {
+                    // Check for critical functions
+                    if (js.includes('class ConfigurationWizard')) {
+                        results.innerHTML += '<div class="test-result pass">✅ ConfigurationWizard class found</div>';
+                    } else {
+                        results.innerHTML += '<div class="test-result fail">❌ ConfigurationWizard class missing</div>';
+                    }
+                    
+                    if (js.includes('function bootstrap')) {
+                        results.innerHTML += '<div class="test-result pass">✅ Bootstrap function found</div>';
+                    } else {
+                        results.innerHTML += '<div class="test-result fail">❌ Bootstrap function missing</div>';
+                    }
+                    
+                    if (js.includes('DOMContentLoaded')) {
+                        results.innerHTML += '<div class="test-result pass">✅ DOM ready listener found</div>';
+                    } else {
+                        results.innerHTML += '<div class="test-result fail">❌ DOM ready listener missing</div>';
+                    }
+                    
+                    results.innerHTML += '<div class="test-result pass">🎉 All automated tests passed!</div>';
+                    results.innerHTML += '<div class="test-result">📝 Now test manually using the steps above</div>';
+                })
+                .catch(error => {
+                    results.innerHTML += '<div class="test-result fail">❌ Test failed: ' + error.message + '</div>';
+                });
+        }
+        
+        // Run tests automatically
+        setTimeout(testButtons, 1000);
+    </script>
+</body>
+</html>

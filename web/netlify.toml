@@ -1,0 +1,16 @@
+[build]
+  publish = "."
+  command = ""
+
+[dev]
+  port = 8000
+  publish = "."
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "same-origin"
+    X-XSS-Protection = "1; mode=block"
+

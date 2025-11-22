@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test M2 Functionality</title>
+</head>
+<body>
+    <h1>Testing M2 Website Functionality</h1>
+    
+    <h2>Test Results:</h2>
+    <div id="results"></div>
+    
+    <script>
+        // Test if the main website loads
+        fetch('http://localhost:8000')
+            .then(response => response.text())
+            .then(html => {
+                const results = document.getElementById('results');
+                results.innerHTML += '<p>✅ Website loads successfully (HTTP ' + response.status + ')</p>';
+                
+                // Check for key elements
+                if (html.includes('startWizard')) {
+                    results.innerHTML += '<p>✅ Start Wizard button found</p>';
+                } else {
+                    results.innerHTML += '<p>❌ Start Wizard button missing</p>';
+                }
+                
+                if (html.includes('app.js')) {
+                    results.innerHTML += '<p>✅ JavaScript file referenced</p>';
+                } else {
+                    results.innerHTML += '<p>❌ JavaScript file missing</p>';
+                }
+                
+                if (html.includes('serviceCatalog')) {
+                    results.innerHTML += '<p>✅ Service catalog container found</p>';
+                } else {
+                    results.innerHTML += '<p>❌ Service catalog container missing</p>';
+                }
+                
+                // Test if app.js loads
+                return fetch('http://localhost:8000/web/app.js');
+            })
+            .then(response => {
+                if (response.ok) {
+                    document.getElementById('results').innerHTML += '<p>✅ JavaScript file loads successfully</p>';
+                } else {
+                    document.getElementById('results').innerHTML += '<p>❌ JavaScript file failed to load</p>';
+                }
+            })
+            .catch(error => {
+                document.getElementById('results').innerHTML += '<p>❌ Error: ' + error.message + '</p>';
+            });
+    </script>
+</body>
+</html>

@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Test</title>
+</head>
+<body>
+    <h1>JavaScript Test</h1>
+    <button id="testBtn">Test Button</button>
+    <div id="output"></div>
+    
+    <script src="app.js"></script>
+    <script>
+        // Test if app.js loaded
+        console.log('Test page loaded');
+        
+        // Test if bootstrap function exists
+        if (typeof bootstrap === 'function') {
+            document.getElementById('output').innerHTML = '<p style="color: green;">✅ Bootstrap function found</p>';
+        } else {
+            document.getElementById('output').innerHTML = '<p style="color: red;">❌ Bootstrap function NOT found</p>';
+        }
+        
+        // Test if ConfigurationWizard exists
+        if (typeof ConfigurationWizard !== 'undefined') {
+            document.getElementById('output').innerHTML += '<p style="color: green;">✅ ConfigurationWizard class found</p>';
+        } else {
+            document.getElementById('output').innerHTML += '<p style="color: red;">❌ ConfigurationWizard class NOT found</p>';
+        }
+        
+        // Test button click
+        document.getElementById('testBtn').addEventListener('click', () => {
+            console.log('Test button clicked');
+            document.getElementById('output').innerHTML += '<p style="color: blue;">🔵 Test button clicked successfully</p>';
+        });
+    </script>
+</body>
+</html>

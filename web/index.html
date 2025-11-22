@@ -3,38 +3,63 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="M2 Installer Studio - Design custom deployment plans, generate Docker Compose, and export .env files for your media stack." />
+    <meta name="theme-color" content="#38bdf8" />
+    <meta name="color-scheme" content="dark" />
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" />
+    <link rel="dns-prefetch" href="https://cdn.jsdelivr.net" />
     <title>M2 Installer Studio</title>
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
     <header class="hero">
       <div>
-        <p class="eyebrow">Media + Nextcloud + Zero Trust</p>
+        <p class="eyebrow">Media + AI Apps + Zero Trust</p>
         <h1>M2 Installer Studio</h1>
         <p class="lede">
           Design a custom deployment plan, generate Docker Compose, and export
           an <code>.env</code> tailored to your stack.
         </p>
+        <div class="hero-actions">
+          <button class="btn-primary btn-large" id="startWizard">
+            🚀 Start Easy Setup Wizard
+          </button>
+          <button class="btn-ghost btn-large" id="advancedMode">
+            ⚙️ Advanced Configuration
+          </button>
+        </div>
       </div>
-      <div class="pill">Updated for late-2023/early-2024 best practices</div>
+      <div class="header-controls">
+        <div class="theme-selector">
+          <label for="themeSelector" class="eyebrow">Theme</label>
+          <select id="themeSelector" class="theme-select">
+            <option value="dark">Dark</option>
+            <option value="midnight">Midnight</option>
+            <option value="ocean">Ocean</option>
+            <option value="forest">Forest</option>
+            <option value="cyberpunk">Cyberpunk</option>
+          </select>
+        </div>
+        <div class="pill" role="status" aria-live="polite">Updated for 2025 best practices</div>
+      </div>
     </header>
 
     <main class="layout">
-      <aside class="sidebar">
-        <div class="sidebar-section">
-          <p class="eyebrow">Flow</p>
-          <ol id="stepList" class="step-list">
-            <li data-step="0" class="active">Profile</li>
-            <li data-step="1">File type coverage</li>
-            <li data-step="2">Pick your stack</li>
-            <li data-step="3">Access & identity</li>
-            <li data-step="4">Build the .env</li>
-            <li data-step="5">Compose output</li>
-            <li data-step="6">Runbook</li>
+      <aside class="sidebar" aria-label="Navigation and guidance">
+        <section class="sidebar-section">
+          <h2 class="eyebrow">Flow</h2>
+          <ol id="stepList" class="step-list" role="list" aria-label="Setup steps">
+            <li data-step="0" class="active" role="listitem"><button type="button" aria-current="step">Profile</button></li>
+            <li data-step="1" role="listitem"><button type="button">File type coverage</button></li>
+            <li data-step="2" role="listitem"><button type="button">Pick your stack</button></li>
+            <li data-step="3" role="listitem"><button type="button">Access & identity</button></li>
+            <li data-step="4" role="listitem"><button type="button">Build the .env</button></li>
+            <li data-step="5" role="listitem"><button type="button">Compose output</button></li>
+            <li data-step="6" role="listitem"><button type="button">Runbook</button></li>
           </ol>
-        </div>
-        <div class="sidebar-section">
-          <p class="eyebrow">Guidance</p>
+        </section>
+        <section class="sidebar-section">
+          <h2 class="eyebrow">Guidance</h2>
           <ul class="sidebar-tips">
             <li>Save often: use download buttons after finishing each step.</li>
             <li>GPU hint toggles VAAPI/NVENC entries for Jellyfin.</li>
@@ -43,23 +68,23 @@
               selections.
             </li>
           </ul>
-        </div>
+        </section>
       </aside>
 
-      <div class="content">
-        <section class="card step-panel active" data-step="0" id="profile">
+      <div class="content" role="main">
+        <section class="card step-panel active" data-step="0" id="profile" aria-labelledby="profile-heading">
           <div class="card-header">
             <div>
               <p class="eyebrow">Step 1</p>
-              <h2>Project profile</h2>
+              <h2 id="profile-heading">Project profile</h2>
               <p>
                 Capture the core details that drive hostnames, storage, and
                 secrets.
               </p>
             </div>
             <div class="actions">
-              <button id="loadSample" class="primary">Load sample stack</button>
-              <button id="autoFill" class="ghost">Auto-fill safe defaults</button>
+              <button id="loadSample" class="primary" type="button">Load sample stack</button>
+              <button id="autoFill" class="ghost" type="button">Auto-fill safe defaults</button>
             </div>
           </div>
           <div class="grid two-col">
