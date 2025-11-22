@@ -48,6 +48,13 @@ const baseEnvFields = [
     required: true,
     helper: "Match host group for file ownership.",
   },
+  {
+    key: "INTEGRATION_SHARED_API_KEY",
+    label: "Shared integration API key",
+    defaultValue: "m2-shared-token",
+    required: true,
+    helper: "Reusable token for cross-app requests (Overseerr, Prowlarr).",
+  },
 ];
 
 const authEnvFields = {
@@ -180,6 +187,65 @@ const optionalEnvFields = {
   ],
 };
 
+const serviceBranding = {
+  jellyfin: {
+    logo: "https://cdn.jsdelivr.net/npm/simple-icons@9/icons/jellyfin.svg",
+    accent: "#7f5af0",
+  },
+  sonarr: {
+    logo: "https://cdn.jsdelivr.net/npm/simple-icons@9/icons/sonarr.svg",
+    accent: "#f97316",
+  },
+  radarr: {
+    logo: "https://cdn.jsdelivr.net/npm/simple-icons@9/icons/radarr.svg",
+    accent: "#facc15",
+  },
+  qbittorrent: {
+    logo: "https://cdn.jsdelivr.net/npm/simple-icons@9/icons/qbittorrent.svg",
+    accent: "#38bdf8",
+  },
+  prowlarr: {
+    logo: "https://cdn.jsdelivr.net/npm/simple-icons@9/icons/prowlarr.svg",
+    accent: "#c084fc",
+  },
+  overseerr: {
+    logo: "https://cdn.jsdelivr.net/npm/simple-icons@9/icons/overseerr.svg",
+    accent: "#22d3ee",
+  },
+  bazarr: {
+    logo: "https://cdn.jsdelivr.net/npm/simple-icons@9/icons/bazarr.svg",
+    accent: "#fde047",
+  },
+  lidarr: {
+    logo: "https://cdn.jsdelivr.net/npm/simple-icons@9/icons/lidarr.svg",
+    accent: "#22c55e",
+  },
+  nextcloud: {
+    logo: "https://cdn.jsdelivr.net/npm/simple-icons@9/icons/nextcloud.svg",
+    accent: "#38bdf8",
+  },
+  filebrowser: {
+    logo: "https://cdn.jsdelivr.net/npm/simple-icons@9/icons/googlechrome.svg",
+    accent: "#a855f7",
+  },
+  navidrome: {
+    logo: "https://cdn.jsdelivr.net/npm/simple-icons@9/icons/musicbrainz.svg",
+    accent: "#22c55e",
+  },
+  cloudflare: {
+    logo: "https://cdn.jsdelivr.net/npm/simple-icons@9/icons/cloudflare.svg",
+    accent: "#fb923c",
+  },
+  observability: {
+    logo: "https://cdn.jsdelivr.net/npm/simple-icons@9/icons/grafana.svg",
+    accent: "#f97316",
+  },
+  objectStorage: {
+    logo: "https://cdn.jsdelivr.net/npm/simple-icons@9/icons/minio.svg",
+    accent: "#22d3ee",
+  },
+};
+
 const serviceCatalog = [
   {
     id: "jellyfin",
@@ -265,6 +331,94 @@ const serviceCatalog = [
         key: "QBITTORRENT_DOWNLOADS",
         label: "Downloads path",
         defaultValue: "${MEDIA_ROOT}/downloads",
+        required: true,
+      },
+    ],
+  },
+  {
+    id: "prowlarr",
+    label: "Prowlarr (indexer)",
+    description: "Centrally manages indexers and shares them with Radarr/Sonarr.",
+    defaultSelected: true,
+    env: [
+      {
+        key: "PROWLARR_VERSION",
+        label: "Prowlarr tag",
+        defaultValue: "latest",
+        required: false,
+      },
+      {
+        key: "PROWLARR_PORT",
+        label: "Prowlarr port",
+        defaultValue: "9696",
+        required: true,
+      },
+      {
+        key: "PROWLARR_API_KEY",
+        label: "Prowlarr API key",
+        defaultValue: "prowlarr-api-key",
+        required: true,
+        helper: "Share this with Radarr/Sonarr and request apps.",
+      },
+    ],
+  },
+  {
+    id: "bazarr",
+    label: "Bazarr (subtitles)",
+    description: "Downloads and syncs subtitles for movies and TV.",
+    defaultSelected: false,
+    env: [
+      {
+        key: "BAZARR_VERSION",
+        label: "Bazarr tag",
+        defaultValue: "latest",
+        required: false,
+      },
+      {
+        key: "BAZARR_PORT",
+        label: "Bazarr port",
+        defaultValue: "6767",
+        required: true,
+      },
+    ],
+  },
+  {
+    id: "overseerr",
+    label: "Overseerr (requests)",
+    description: "Single hub for media requests that talks to Radarr/Sonarr.",
+    defaultSelected: false,
+    env: [
+      {
+        key: "OVERSEERR_PORT",
+        label: "Overseerr port",
+        defaultValue: "5055",
+        required: true,
+      },
+      {
+        key: "OVERSEERR_API_KEY",
+        label: "Overseerr API key",
+        defaultValue: "overseerr-api-key",
+        required: true,
+        helper: "Pass into Radarr/Sonarr plus the shared key field above.",
+      },
+    ],
+  },
+  {
+    id: "lidarr",
+    label: "Lidarr (music automation)",
+    description: "Finds and organizes music releases alongside Navidrome.",
+    defaultSelected: false,
+    env: [
+      {
+        key: "LIDARR_VERSION",
+        label: "Lidarr tag",
+        defaultValue: "latest",
+        required: false,
+      },
+      {
+        key: "LIDARR_PORT",
+        label: "Lidarr port",
+        defaultValue: "8686",
         required: true,
       },
     ],
@@ -381,15 +535,16 @@ const fileTypeGuides = [
     id: "movies",
     label: "Movies (MKV, MP4)",
     extensions: ["mkv", "mp4"],
-    services: ["jellyfin", "radarr"],
-    description: "Playback + automation with Jellyfin and Radarr.",
+    services: ["jellyfin", "radarr", "prowlarr", "bazarr", "overseerr"],
+    description:
+      "Playback + automation with Jellyfin, Radarr, and shared indexers.",
   },
   {
     id: "tv",
     label: "TV episodes",
     extensions: ["mkv", "mp4"],
-    services: ["jellyfin", "sonarr"],
-    description: "Sonarr pulls episodes; Jellyfin serves them.",
+    services: ["jellyfin", "sonarr", "prowlarr", "bazarr", "overseerr"],
+    description: "Sonarr + Prowlarr feed downloads; Jellyfin serves them.",
   },
   {
     id: "music",
@@ -418,6 +573,14 @@ const envValues = new Map();
 const selectedFileTypes = new Set();
 let currentStep = 0;
 
+const profileBindings = [
+  { input: "projectName", key: "COMPOSE_PROJECT_NAME", fallback: "m2" },
+  { input: "baseDomain", key: "BASE_DOMAIN", fallback: "media.example.com" },
+  { input: "timezone", key: "TZ", fallback: "UTC" },
+  { input: "mediaPath", key: "MEDIA_ROOT", fallback: "/srv/media" },
+  { input: "dataPath", key: "DATA_ROOT", fallback: "/srv/m2-data" },
+];
+
 function envRef(name, fallback) {
   return "${" + name + (fallback ? ":-" + fallback + "}" : "}");
 }
@@ -430,6 +593,32 @@ function uniqueByKey(fields) {
     }
   });
   return Array.from(map.values());
+}
+
+function applyDefaultEnvValues() {
+  baseEnvFields.forEach((field) =>
+    envValues.set(field.key, field.defaultValue || ""),
+  );
+  Object.values(authEnvFields)
+    .flat()
+    .forEach((field) => envValues.set(field.key, field.defaultValue || ""));
+  Object.values(optionalEnvFields)
+    .flat()
+    .forEach((field) => envValues.set(field.key, field.defaultValue || ""));
+  serviceCatalog.forEach((service) =>
+    service.env?.forEach((field) =>
+      envValues.set(field.key, field.defaultValue || ""),
+    ),
+  );
+}
+
+function setProfileValues(overrides = {}) {
+  profileBindings.forEach(({ input, key, fallback }) => {
+    const el = document.getElementById(input);
+    const value = overrides[key] || envValues.get(key) || fallback;
+    el.value = value;
+    envValues.set(key, value);
+  });
 }
 
 function isServiceSelected(id) {
@@ -469,15 +658,33 @@ function renderCatalog() {
   };
 
   serviceCatalog.forEach((service) => {
+    const brand = serviceBranding[service.id] || {};
+    const logo = brand.logo
+      ? `<div class="logo" style="background:${brand.accent || "var(--border)"}"><img src="${brand.logo}" alt="${service.label} logo" loading="lazy" /></div>`
+      : `<div class="logo placeholder">${service.label.charAt(0)}</div>`;
     const wrapper = document.createElement("label");
     wrapper.className = "item";
     wrapper.innerHTML = `
       <input type="checkbox" value="${service.id}" ${service.defaultSelected ? "checked" : ""} />
-      <div>
-        <h3>${service.label}</h3>
-        <p>${service.description}</p>
+      <div class="service-meta">
+        ${logo}
+        <div class="service-copy">
+          <h3>${service.label}</h3>
+          <p>${service.description}</p>
+        </div>
       </div>
     `;
+    const logoImg = wrapper.querySelector(".logo img");
+    if (logoImg) {
+      logoImg.addEventListener("error", () => {
+        const logoContainer = logoImg.parentElement;
+        logoImg.remove();
+        if (logoContainer) {
+          logoContainer.classList.add("placeholder");
+          logoContainer.textContent = service.label.charAt(0);
+        }
+      });
+    }
     const checkbox = wrapper.querySelector("input");
     checkbox.addEventListener("change", (event) => {
       renderEnvForm();
@@ -562,6 +769,30 @@ function buildServiceTemplates(state) {
   if (selections.has("qbittorrent")) {
     templates.push(
       `  qbittorrent:\n    image: lscr.io/linuxserver/qbittorrent:${envRef("QBITTORRENT_VERSION", "latest")}\n    environment:\n      - PUID=${envRef("PUID")}\n      - PGID=${envRef("PGID")}\n      - TZ=${envRef("TZ")}\n      - WEBUI_PORT=${envRef("QBITTORRENT_PORT", "8080")}\n    volumes:\n      - ${envRef("DATA_ROOT")}/qbittorrent:/config\n      - ${envRef("QBITTORRENT_DOWNLOADS", envRef("MEDIA_ROOT") + "/downloads")}:/downloads\n    ports:\n      - \"${envRef("QBITTORRENT_PORT", "8080")}:8080\"\n    networks:\n      - downloadnet\n    restart: unless-stopped`,
+    );
+  }
+
+  if (selections.has("prowlarr")) {
+    templates.push(
+      `  prowlarr:\n    image: lscr.io/linuxserver/prowlarr:${envRef("PROWLARR_VERSION", "latest")}\n    environment:\n      - PUID=${envRef("PUID")}\n      - PGID=${envRef("PGID")}\n      - TZ=${envRef("TZ")}\n      - PROWLARR__API_KEY=${envRef("PROWLARR_API_KEY")}\n    volumes:\n      - ${envRef("DATA_ROOT")}/prowlarr:/config\n    ports:\n      - \"${envRef("PROWLARR_PORT", "9696")}:9696\"\n    networks:\n      - frontnet\n      - downloadnet\n    depends_on:\n      - qbittorrent\n    restart: unless-stopped`,
+    );
+  }
+
+  if (selections.has("bazarr")) {
+    templates.push(
+      `  bazarr:\n    image: lscr.io/linuxserver/bazarr:${envRef("BAZARR_VERSION", "latest")}\n    environment:\n      - PUID=${envRef("PUID")}\n      - PGID=${envRef("PGID")}\n      - TZ=${envRef("TZ")}\n    volumes:\n      - ${envRef("DATA_ROOT")}/bazarr:/config\n      - ${envRef("MEDIA_ROOT")}/library:/library\n    ports:\n      - \"${envRef("BAZARR_PORT", "6767")}:6767\"\n    networks:\n      - frontnet\n      - downloadnet\n    depends_on:\n      - qbittorrent\n    restart: unless-stopped`,
+    );
+  }
+
+  if (selections.has("overseerr")) {
+    templates.push(
+      `  overseerr:\n    image: sctx/overseerr:latest\n    environment:\n      - LOG_LEVEL=info\n      - TZ=${envRef("TZ")}\n      - OVERSEERR_API_KEY=${envRef("OVERSEERR_API_KEY")}\n      - INTEGRATION_SHARED_API_KEY=${envRef("INTEGRATION_SHARED_API_KEY")}\n    volumes:\n      - ${envRef("DATA_ROOT")}/overseerr:/app/config\n    ports:\n      - \"${envRef("OVERSEERR_PORT", "5055")}:5055\"\n    networks:\n      - frontnet\n    depends_on:\n      - radarr\n      - sonarr\n    restart: unless-stopped`,
+    );
+  }
+
+  if (selections.has("lidarr")) {
+    templates.push(
+      `  lidarr:\n    image: lscr.io/linuxserver/lidarr:${envRef("LIDARR_VERSION", "latest")}\n    environment:\n      - PUID=${envRef("PUID")}\n      - PGID=${envRef("PGID")}\n      - TZ=${envRef("TZ")}\n    volumes:\n      - ${envRef("DATA_ROOT")}/lidarr:/config\n      - ${envRef("MEDIA_ROOT")}/library:/library\n      - ${envRef("MEDIA_ROOT")}/downloads:/downloads\n    ports:\n      - \"${envRef("LIDARR_PORT", "8686")}:8686\"\n    networks:\n      - frontnet\n      - downloadnet\n    depends_on:\n      - qbittorrent\n    restart: unless-stopped`,
     );
   }
 
@@ -812,18 +1043,9 @@ function goToStep(index) {
 }
 
 function wireActions() {
-  const profileBindings = [
-    { input: "projectName", key: "COMPOSE_PROJECT_NAME", fallback: "m2" },
-    { input: "baseDomain", key: "BASE_DOMAIN", fallback: "media.example.com" },
-    { input: "timezone", key: "TZ", fallback: "UTC" },
-    { input: "mediaPath", key: "MEDIA_ROOT", fallback: "/srv/media" },
-    { input: "dataPath", key: "DATA_ROOT", fallback: "/srv/m2-data" },
-  ];
-
-  profileBindings.forEach(({ input, key, fallback }) => {
+  setProfileValues();
+  profileBindings.forEach(({ input, key }) => {
     const el = document.getElementById(input);
-    el.value = envValues.get(key) || fallback;
-    envValues.set(key, el.value);
     el.addEventListener("input", (event) => {
       envValues.set(key, event.target.value);
       updatePreviews();
@@ -857,34 +1079,72 @@ function wireActions() {
     .getElementById("gpuAcceleration")
     .addEventListener("change", updatePreviews);
 
-  document.getElementById("autoFill").addEventListener("click", () => {
-    document.getElementById("projectName").value = "m2-stack";
-    document.getElementById("baseDomain").value = "media.example.com";
-    document.getElementById("timezone").value = "UTC";
-    document.getElementById("mediaPath").value = "/srv/media";
-    document.getElementById("dataPath").value = "/srv/m2-data";
-    baseEnvFields.forEach((field) =>
-      envValues.set(field.key, field.defaultValue || ""),
-    );
-    Object.values(authEnvFields)
-      .flat()
-      .forEach((field) => envValues.set(field.key, field.defaultValue || ""));
-    Object.values(optionalEnvFields)
-      .flat()
-      .forEach((field) => envValues.set(field.key, field.defaultValue || ""));
-    serviceCatalog.forEach((service) =>
-      service.env?.forEach((field) =>
-        envValues.set(field.key, field.defaultValue || ""),
-      ),
-    );
+  document
+    .getElementById("autoFill")
+    .addEventListener("click", () => {
+      applyDefaultEnvValues();
+      setProfileValues();
+      renderEnvForm();
+      updateCoverageSummary();
+      goToStep(4);
+    });
+
+  document.getElementById("loadSample").addEventListener("click", () => {
+    const sampleSelections = new Set([
+      "jellyfin",
+      "sonarr",
+      "radarr",
+      "qbittorrent",
+      "prowlarr",
+      "bazarr",
+      "overseerr",
+      "lidarr",
+      "navidrome",
+      "nextcloud",
+      "filebrowser",
+      "cloudflare",
+    ]);
+
+    applyDefaultEnvValues();
+    setProfileValues({
+      COMPOSE_PROJECT_NAME: "m2-sample",
+      BASE_DOMAIN: "media.local",
+      TZ: "UTC",
+      MEDIA_ROOT: "/srv/media",
+      DATA_ROOT: "/srv/m2-data",
+    });
+    document.getElementById("authChoice").value = "authelia";
+
+    serviceCatalog.forEach((service) => {
+      ensureServiceSelection(service.id, sampleSelections.has(service.id));
+    });
+
+    const desiredFileTypes = new Set([
+      "movies",
+      "tv",
+      "music",
+      "photos",
+      "documents",
+    ]);
+
+    document
+      .querySelectorAll('#fileTypeGuide input[type="checkbox"]')
+      .forEach((box) => {
+        const shouldCheck = desiredFileTypes.has(box.value);
+        if (box.checked !== shouldCheck) {
+          box.checked = shouldCheck;
+          box.dispatchEvent(new Event("change", { bubbles: true }));
+        }
+      });
+
     renderEnvForm();
+    updateCoverageSummary();
+    goToStep(4);
   });
 }
 
 function bootstrap() {
-  baseEnvFields.forEach((field) =>
-    envValues.set(field.key, field.defaultValue || ""),
-  );
+  applyDefaultEnvValues();
   renderCatalog();
   renderFileTypeGuide();
   document.getElementById("cloudflareTunnel").checked = true;
