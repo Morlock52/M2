@@ -1,158 +1,264 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>M2 Installer Studio</title>
-  <link rel="stylesheet" href="styles.css" />
-</head>
-<body>
-  <header class="hero">
-    <div>
-      <p class="eyebrow">Media + Nextcloud + Zero Trust</p>
-      <h1>M2 Installer Studio</h1>
-      <p class="lede">Design a custom deployment plan, generate Docker Compose, and export an <code>.env</code> tailored to your stack.</p>
-    </div>
-    <div class="pill">Updated for late-2023/early-2024 best practices</div>
-  </header>
-
-  <main>
-    <section class="card" id="profile">
-      <div class="card-header">
-        <div>
-          <p class="eyebrow">Step 1</p>
-          <h2>Project profile</h2>
-          <p>Capture the core details that drive hostnames, storage, and secrets.</p>
-        </div>
-        <button id="autoFill" class="ghost">Auto-fill safe defaults</button>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>M2 Installer Studio</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="hero">
+      <div>
+        <p class="eyebrow">Media + Nextcloud + Zero Trust</p>
+        <h1>M2 Installer Studio</h1>
+        <p class="lede">
+          Design a custom deployment plan, generate Docker Compose, and export
+          an <code>.env</code> tailored to your stack.
+        </p>
       </div>
-      <div class="grid two-col">
-        <label class="field">
-          <span>Project name</span>
-          <input type="text" id="projectName" placeholder="m2-stack" />
-          <small>Used for <code>COMPOSE_PROJECT_NAME</code>.</small>
-        </label>
-        <label class="field">
-          <span>Base domain</span>
-          <input type="text" id="baseDomain" placeholder="media.example.com" />
-          <small>Applies to Cloudflare/Access + app hostnames.</small>
-        </label>
-        <label class="field">
-          <span>Timezone</span>
-          <input type="text" id="timezone" placeholder="UTC" />
-          <small>Used by containers to align cron and logging.</small>
-        </label>
-        <label class="field">
-          <span>Media storage path</span>
-          <input type="text" id="mediaPath" placeholder="/srv/media" />
-          <small>Mounted into Jellyfin/Sonarr/Radarr/qBittorrent.</small>
-        </label>
-        <label class="field">
-          <span>Data/config path</span>
-          <input type="text" id="dataPath" placeholder="/srv/m2-data" />
-          <small>Holds app configs, databases, and Prometheus rules.</small>
-        </label>
-      </div>
-    </section>
+      <div class="pill">Updated for late-2023/early-2024 best practices</div>
+    </header>
 
-    <section class="card" id="stack">
-      <div class="card-header">
-        <div>
-          <p class="eyebrow">Step 2</p>
-          <h2>Choose your stack</h2>
-          <p>Mix and match services; the generator will wire them together.</p>
+    <main class="layout">
+      <aside class="sidebar">
+        <div class="sidebar-section">
+          <p class="eyebrow">Flow</p>
+          <ol id="stepList" class="step-list">
+            <li data-step="0" class="active">Profile</li>
+            <li data-step="1">File type coverage</li>
+            <li data-step="2">Pick your stack</li>
+            <li data-step="3">Access & identity</li>
+            <li data-step="4">Build the .env</li>
+            <li data-step="5">Compose output</li>
+            <li data-step="6">Runbook</li>
+          </ol>
         </div>
-        <label class="toggle">
-          <input type="checkbox" id="gpuAcceleration" />
-          <span>Enable GPU hints (VAAPI/NVENC)</span>
-        </label>
-      </div>
-
-      <div class="catalog" id="serviceCatalog"></div>
-    </section>
-
-    <section class="card" id="auth">
-      <div class="card-header">
-        <div>
-          <p class="eyebrow">Step 3</p>
-          <h2>Access & identity</h2>
-          <p>Select your auth gateway and tunnel preference.</p>
+        <div class="sidebar-section">
+          <p class="eyebrow">Guidance</p>
+          <ul class="sidebar-tips">
+            <li>Save often: use download buttons after finishing each step.</li>
+            <li>GPU hint toggles VAAPI/NVENC entries for Jellyfin.</li>
+            <li>
+              Cloudflare Tunnel and Object Storage toggles mirror the catalog
+              selections.
+            </li>
+          </ul>
         </div>
-      </div>
-      <div class="grid three-col">
-        <label class="field select">
-          <span>Auth gateway</span>
-          <select id="authChoice">
-            <option value="authelia">Authelia</option>
-            <option value="authentik">Authentik</option>
-            <option value="oauth2-proxy">OAuth2 Proxy</option>
-          </select>
-          <small>All options sit in front of the apps and support social login flows.</small>
-        </label>
-        <label class="toggle inline">
-          <input type="checkbox" id="cloudflareTunnel" checked />
-          <span>Include Cloudflare Tunnel</span>
-        </label>
-        <label class="toggle inline">
-          <input type="checkbox" id="objectStorage" />
-          <span>Use S3/MinIO for assets</span>
-        </label>
-      </div>
-    </section>
+      </aside>
 
-    <section class="card" id="env">
-      <div class="card-header">
-        <div>
-          <p class="eyebrow">Step 4</p>
-          <h2>.env builder</h2>
-          <p>Provide secrets and tune defaults. Required values are marked.</p>
-        </div>
-        <div class="actions">
-          <button id="copyEnv" class="ghost">Copy .env</button>
-          <button id="downloadEnv" class="primary">Download .env</button>
-        </div>
+      <div class="content">
+        <section class="card step-panel active" data-step="0" id="profile">
+          <div class="card-header">
+            <div>
+              <p class="eyebrow">Step 1</p>
+              <h2>Project profile</h2>
+              <p>
+                Capture the core details that drive hostnames, storage, and
+                secrets.
+              </p>
+            </div>
+            <button id="autoFill" class="ghost">Auto-fill safe defaults</button>
+          </div>
+          <div class="grid two-col">
+            <label class="field">
+              <span>Project name</span>
+              <input type="text" id="projectName" placeholder="m2-stack" />
+              <small>Used for <code>COMPOSE_PROJECT_NAME</code>.</small>
+            </label>
+            <label class="field">
+              <span>Base domain</span>
+              <input
+                type="text"
+                id="baseDomain"
+                placeholder="media.example.com"
+              />
+              <small>Applies to Cloudflare/Access + app hostnames.</small>
+            </label>
+            <label class="field">
+              <span>Timezone</span>
+              <input type="text" id="timezone" placeholder="UTC" />
+              <small>Used by containers to align cron and logging.</small>
+            </label>
+            <label class="field">
+              <span>Media storage path</span>
+              <input type="text" id="mediaPath" placeholder="/srv/media" />
+              <small>Mounted into Jellyfin/Sonarr/Radarr/qBittorrent.</small>
+            </label>
+            <label class="field">
+              <span>Data/config path</span>
+              <input type="text" id="dataPath" placeholder="/srv/m2-data" />
+              <small>Holds app configs, databases, and Prometheus rules.</small>
+            </label>
+          </div>
+          <div class="panel-nav">
+            <span></span>
+            <button class="primary" data-next>Next: File types</button>
+          </div>
+        </section>
+
+        <section class="card step-panel" data-step="1" id="coverage">
+          <div class="card-header">
+            <div>
+              <p class="eyebrow">Step 2</p>
+              <h2>File type coverage</h2>
+              <p>
+                Select the media you need to support. We will highlight apps
+                that cover each family.
+              </p>
+            </div>
+          </div>
+          <div id="fileTypeGuide" class="filetype-grid"></div>
+          <div id="coverageSummary" class="coverage-summary"></div>
+          <div class="panel-nav">
+            <button class="ghost" data-prev>Back</button>
+            <button class="primary" data-next>Next: Stack</button>
+          </div>
+        </section>
+
+        <section class="card step-panel" data-step="2" id="stack">
+          <div class="card-header">
+            <div>
+              <p class="eyebrow">Step 3</p>
+              <h2>Choose your stack</h2>
+              <p>
+                Mix and match services; the generator will wire them together.
+              </p>
+            </div>
+            <div class="stack-toggles">
+              <label class="toggle">
+                <input type="checkbox" id="gpuAcceleration" />
+                <span>Enable GPU hints (VAAPI/NVENC)</span>
+              </label>
+              <label class="toggle">
+                <input type="checkbox" id="cloudflareTunnel" />
+                <span>Include Cloudflare Tunnel</span>
+              </label>
+              <label class="toggle">
+                <input type="checkbox" id="objectStorage" />
+                <span>Use S3/MinIO for assets</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="catalog" id="serviceCatalog"></div>
+          <div class="panel-nav">
+            <button class="ghost" data-prev>Back</button>
+            <button class="primary" data-next>Next: Access</button>
+          </div>
+        </section>
+
+        <section class="card step-panel" data-step="3" id="auth">
+          <div class="card-header">
+            <div>
+              <p class="eyebrow">Step 4</p>
+              <h2>Access & identity</h2>
+              <p>Select your auth gateway and tunnel preference.</p>
+            </div>
+          </div>
+          <div class="grid three-col">
+            <label class="field select">
+              <span>Auth gateway</span>
+              <select id="authChoice">
+                <option value="authelia">Authelia</option>
+                <option value="authentik">Authentik</option>
+                <option value="oauth2-proxy">OAuth2 Proxy</option>
+              </select>
+              <small
+                >All options sit in front of the apps and support social login
+                flows.</small
+              >
+            </label>
+            <label class="toggle inline">
+              <input type="checkbox" id="cloudflareTunnelInline" />
+              <span>Include Cloudflare Tunnel</span>
+            </label>
+            <label class="toggle inline">
+              <input type="checkbox" id="objectStorageInline" />
+              <span>Use S3/MinIO for assets</span>
+            </label>
+          </div>
+          <div class="panel-nav">
+            <button class="ghost" data-prev>Back</button>
+            <button class="primary" data-next>Next: .env</button>
+          </div>
+        </section>
+
+        <section class="card step-panel" data-step="4" id="env">
+          <div class="card-header">
+            <div>
+              <p class="eyebrow">Step 5</p>
+              <h2>.env builder</h2>
+              <p>
+                Provide secrets and tune defaults. Required values are marked.
+              </p>
+            </div>
+            <div class="actions">
+              <button id="copyEnv" class="ghost">Copy .env</button>
+              <button id="downloadEnv" class="primary">Download .env</button>
+            </div>
+          </div>
+          <div id="envForm" class="env-form"></div>
+          <pre id="envPreview" class="preview"></pre>
+          <div class="panel-nav">
+            <button class="ghost" data-prev>Back</button>
+            <button class="primary" data-next>Next: Compose</button>
+          </div>
+        </section>
+
+        <section class="card step-panel" data-step="5" id="compose">
+          <div class="card-header">
+            <div>
+              <p class="eyebrow">Step 6</p>
+              <h2>Docker Compose</h2>
+              <p>
+                Generated from your selections with network and healthcheck
+                defaults.
+              </p>
+            </div>
+            <div class="actions">
+              <button id="copyCompose" class="ghost">Copy YAML</button>
+              <button id="downloadCompose" class="primary">
+                Download compose.yml
+              </button>
+            </div>
+          </div>
+          <pre id="composePreview" class="preview"></pre>
+          <div class="panel-nav">
+            <button class="ghost" data-prev>Back</button>
+            <button class="primary" data-next>Next: Runbook</button>
+          </div>
+        </section>
+
+        <section class="card step-panel" data-step="6" id="runbook">
+          <div class="card-header">
+            <div>
+              <p class="eyebrow">Step 7</p>
+              <h2>Runbook</h2>
+              <p>Use these commands locally after saving the files.</p>
+            </div>
+          </div>
+          <ol class="runbook">
+            <li>Create the files: <code>touch .env compose.yml</code></li>
+            <li>Paste or download the generated content above.</li>
+            <li>Validate: <code>docker compose config</code></li>
+            <li>Start: <code>docker compose up -d</code></li>
+            <li>Inspect health: <code>docker compose ps</code></li>
+          </ol>
+          <div class="panel-nav">
+            <button class="ghost" data-prev>Back</button>
+            <span></span>
+          </div>
+        </section>
       </div>
-      <div id="envForm" class="env-form"></div>
-      <pre id="envPreview" class="preview"></pre>
-    </section>
+    </main>
 
-    <section class="card" id="compose">
-      <div class="card-header">
-        <div>
-          <p class="eyebrow">Step 5</p>
-          <h2>Docker Compose</h2>
-          <p>Generated from your selections with network and healthcheck defaults.</p>
-        </div>
-        <div class="actions">
-          <button id="copyCompose" class="ghost">Copy YAML</button>
-          <button id="downloadCompose" class="primary">Download compose.yml</button>
-        </div>
-      </div>
-      <pre id="composePreview" class="preview"></pre>
-    </section>
+    <footer class="footer">
+      <p>
+        Built for self-hosters who want a flexible, Zero Trust-ready media
+        cloud.
+      </p>
+    </footer>
 
-    <section class="card" id="runbook">
-      <div class="card-header">
-        <div>
-          <p class="eyebrow">Step 6</p>
-          <h2>Runbook</h2>
-          <p>Use these commands locally after saving the files.</p>
-        </div>
-      </div>
-      <ol class="runbook">
-        <li>Create the files: <code>touch .env compose.yml</code></li>
-        <li>Paste or download the generated content above.</li>
-        <li>Validate: <code>docker compose config</code></li>
-        <li>Start: <code>docker compose up -d</code></li>
-        <li>Inspect health: <code>docker compose ps</code></li>
-      </ol>
-    </section>
-  </main>
-
-  <footer class="footer">
-    <p>Built for self-hosters who want a flexible, Zero Trust-ready media cloud.</p>
-  </footer>
-
-  <script src="app.js"></script>
-</body>
+    <script src="app.js"></script>
+  </body>
 </html>
