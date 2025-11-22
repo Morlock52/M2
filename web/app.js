@@ -1,0 +1,396 @@
+const baseEnvFields = [
+  { key: 'COMPOSE_PROJECT_NAME', label: 'Compose project name', defaultValue: 'm2', required: true, helper: 'Used as prefix for container names.' },
+  { key: 'BASE_DOMAIN', label: 'Base domain', defaultValue: 'media.example.com', required: true, helper: 'Primary hostname for Cloudflare/Access rules.' },
+  { key: 'TZ', label: 'Timezone', defaultValue: 'UTC', required: true, helper: 'Aligns cron and logs.' },
+  { key: 'MEDIA_ROOT', label: 'Media root', defaultValue: '/srv/media', required: true, helper: 'Path that holds library and downloads.' },
+  { key: 'DATA_ROOT', label: 'Data root', defaultValue: '/srv/m2-data', required: true, helper: 'Path for configs and app state.' },
+  { key: 'PUID', label: 'User ID (PUID)', defaultValue: '1000', required: true, helper: 'Match host user for file ownership.' },
+  { key: 'PGID', label: 'Group ID (PGID)', defaultValue: '1000', required: true, helper: 'Match host group for file ownership.' },
+];
+
+const authEnvFields = {
+  authelia: [
+    { key: 'AUTHELIA_JWT_SECRET', label: 'Authelia JWT secret', defaultValue: 'change-me-authelia', required: true, helper: 'Secure random string for session tokens.' },
+    { key: 'AUTHELIA_SESSION_SECRET', label: 'Authelia session secret', defaultValue: 'change-me-session', required: true, helper: 'Cryptographic secret for cookies.' },
+  ],
+  authentik: [
+    { key: 'AUTHENTIK_SECRET_KEY', label: 'Authentik secret key', defaultValue: 'change-me-authentik', required: true, helper: 'Django secret key for Authentik.' },
+    { key: 'AUTHENTIK_POSTGRES_PASSWORD', label: 'Authentik Postgres password', defaultValue: 'authentik-db-pass', required: true, helper: 'Password for Authentik database.' },
+  ],
+  'oauth2-proxy': [
+    { key: 'OAUTH2_PROXY_CLIENT_ID', label: 'OAuth2 Proxy client ID', defaultValue: 'client-id', required: true, helper: 'Issued by your IdP.' },
+    { key: 'OAUTH2_PROXY_CLIENT_SECRET', label: 'OAuth2 Proxy client secret', defaultValue: 'client-secret', required: true, helper: 'Issued by your IdP.' },
+    { key: 'OAUTH2_PROXY_COOKIE_SECRET', label: 'OAuth2 Proxy cookie secret', defaultValue: 'random-cookie-secret', required: true, helper: '16/24/32 byte base64 string.' },
+  ],
+};
+
+const optionalEnvFields = {
+  cloudflare: [
+    { key: 'CLOUDFLARE_TUNNEL_TOKEN', label: 'Cloudflare tunnel token', defaultValue: 'copy-from-dashboard', required: true, helper: 'Token from cloudflared tunnel create.' },
+    { key: 'PUBLIC_HOST_MEDIA', label: 'Media hostname', defaultValue: 'media.example.com', required: true, helper: 'Routes traffic to Jellyfin/auth proxy.' },
+    { key: 'PUBLIC_HOST_NEXTCLOUD', label: 'Nextcloud hostname', defaultValue: 'files.example.com', required: false, helper: 'Optional secondary hostname.' },
+  ],
+  objectStorage: [
+    { key: 'S3_ENDPOINT', label: 'S3 endpoint', defaultValue: 'https://s3.wasabisys.com', required: true, helper: 'Use your provider URL or MinIO.' },
+    { key: 'S3_ACCESS_KEY', label: 'S3 access key', defaultValue: 'minioadmin', required: true, helper: 'Access key for object storage.' },
+    { key: 'S3_SECRET_KEY', label: 'S3 secret key', defaultValue: 'minioadmin', required: true, helper: 'Secret key for object storage.' },
+    { key: 'S3_BUCKET', label: 'S3 bucket', defaultValue: 'm2-media', required: true, helper: 'Bucket for backups or assets.' },
+  ],
+  observability: [
+    { key: 'GRAFANA_ADMIN_USER', label: 'Grafana admin user', defaultValue: 'admin', required: true, helper: 'Grafana login.' },
+    { key: 'GRAFANA_ADMIN_PASSWORD', label: 'Grafana admin password', defaultValue: 'grafana-pass', required: true, helper: 'Strong password recommended.' },
+  ],
+};
+
+const serviceCatalog = [
+  {
+    id: 'jellyfin',
+    label: 'Jellyfin media server',
+    description: 'Streams your library with hardware transcode support.',
+    defaultSelected: true,
+    env: [
+      { key: 'JELLYFIN_VERSION', label: 'Jellyfin tag', defaultValue: 'latest', required: false, helper: 'Pin to a tag if needed.' },
+      { key: 'JELLYFIN_HTTP_PORT', label: 'Jellyfin port', defaultValue: '8096', required: true, helper: 'Host port for HTTP access.' },
+    ],
+  },
+  {
+    id: 'sonarr',
+    label: 'Sonarr',
+    description: 'TV automation that feeds downloads into the library.',
+    defaultSelected: true,
+    env: [
+      { key: 'SONARR_VERSION', label: 'Sonarr tag', defaultValue: 'latest', required: false },
+      { key: 'SONARR_PORT', label: 'Sonarr port', defaultValue: '8989', required: true },
+    ],
+  },
+  {
+    id: 'radarr',
+    label: 'Radarr',
+    description: 'Movie automation with the same layout as Sonarr.',
+    defaultSelected: true,
+    env: [
+      { key: 'RADARR_VERSION', label: 'Radarr tag', defaultValue: 'latest', required: false },
+      { key: 'RADARR_PORT', label: 'Radarr port', defaultValue: '7878', required: true },
+    ],
+  },
+  {
+    id: 'qbittorrent',
+    label: 'qBittorrent',
+    description: 'Download client isolated on its own network.',
+    defaultSelected: true,
+    env: [
+      { key: 'QBITTORRENT_PORT', label: 'qBittorrent port', defaultValue: '8080', required: true },
+      { key: 'QBITTORRENT_VERSION', label: 'qBittorrent tag', defaultValue: 'latest', required: false },
+      { key: 'QBITTORRENT_DOWNLOADS', label: 'Downloads path', defaultValue: '${MEDIA_ROOT}/downloads', required: true },
+    ],
+  },
+  {
+    id: 'nextcloud',
+    label: 'Nextcloud',
+    description: 'Collaboration and sync with Postgres + Redis.',
+    defaultSelected: true,
+    env: [
+      { key: 'NEXTCLOUD_VERSION', label: 'Nextcloud tag', defaultValue: 'latest', required: false },
+      { key: 'NEXTCLOUD_ADMIN_USER', label: 'Admin user', defaultValue: 'admin', required: true },
+      { key: 'NEXTCLOUD_ADMIN_PASSWORD', label: 'Admin password', defaultValue: 'change-me', required: true },
+      { key: 'NEXTCLOUD_TRUSTED_DOMAINS', label: 'Trusted domains', defaultValue: '${BASE_DOMAIN}', required: true },
+      { key: 'POSTGRES_PASSWORD', label: 'Postgres password', defaultValue: 'postgres-pass', required: true },
+      { key: 'REDIS_PASSWORD', label: 'Redis password', defaultValue: 'redis-pass', required: true },
+    ],
+  },
+  {
+    id: 'cloudflare',
+    label: 'Cloudflare Tunnel',
+    description: 'Zero Trust entry with WAF/CDN and Access policies.',
+    defaultSelected: true,
+    env: optionalEnvFields.cloudflare,
+  },
+  {
+    id: 'observability',
+    label: 'Observability (Prometheus/Grafana/Loki)',
+    description: 'Collect metrics and logs for the stack.',
+    defaultSelected: false,
+    env: optionalEnvFields.observability,
+  },
+  {
+    id: 'objectStorage',
+    label: 'Object storage (MinIO/S3)',
+    description: 'Store assets or backups off-box.',
+    defaultSelected: false,
+    env: optionalEnvFields.objectStorage,
+  },
+];
+
+const envValues = new Map();
+
+function envRef(name, fallback) {
+  return '${' + name + (fallback ? ':-' + fallback + '}' : '}');
+}
+
+function uniqueByKey(fields) {
+  const map = new Map();
+  fields.forEach((field) => {
+    if (!map.has(field.key)) {
+      map.set(field.key, field);
+    }
+  });
+  return Array.from(map.values());
+}
+
+function getSelections() {
+  const selected = new Set();
+  document.querySelectorAll('.catalog input[type="checkbox"]').forEach((box) => {
+    if (box.checked) selected.add(box.value);
+  });
+  return selected;
+}
+
+function collectEnvFields() {
+  const selections = getSelections();
+  const fields = [...baseEnvFields];
+  serviceCatalog.forEach((service) => {
+    if (selections.has(service.id) && service.env) {
+      fields.push(...service.env);
+    }
+  });
+  const authChoice = document.getElementById('authChoice').value;
+  if (authEnvFields[authChoice]) fields.push(...authEnvFields[authChoice]);
+  return uniqueByKey(fields);
+}
+
+function renderCatalog() {
+  const catalog = document.getElementById('serviceCatalog');
+  catalog.innerHTML = '';
+  const toggleMap = {
+    cloudflare: 'cloudflareTunnel',
+    objectStorage: 'objectStorage',
+  };
+  serviceCatalog.forEach((service) => {
+    const wrapper = document.createElement('label');
+    wrapper.className = 'item';
+    wrapper.innerHTML = `
+      <input type="checkbox" value="${service.id}" ${service.defaultSelected ? 'checked' : ''} />
+      <div>
+        <h3>${service.label}</h3>
+        <p>${service.description}</p>
+      </div>
+    `;
+    wrapper.querySelector('input').addEventListener('change', () => {
+      renderEnvForm();
+      updatePreviews();
+      const toggleId = toggleMap[service.id];
+      if (toggleId) {
+        const toggle = document.getElementById(toggleId);
+        if (toggle) toggle.checked = box.checked;
+      }
+    });
+    catalog.appendChild(wrapper);
+  });
+}
+
+function renderEnvForm() {
+  const envForm = document.getElementById('envForm');
+  envForm.innerHTML = '';
+  const fields = collectEnvFields();
+  fields.forEach((field) => {
+    if (!envValues.has(field.key)) envValues.set(field.key, field.defaultValue || '');
+    const currentValue = envValues.get(field.key) || '';
+    const wrapper = document.createElement('div');
+    const isMissing = field.required && !currentValue.trim();
+    wrapper.className = `env-field${isMissing ? ' missing' : ''}`;
+    wrapper.innerHTML = `
+      <div class="env-label">
+        <label>${field.key}${field.required ? ' *' : ''}</label>
+        ${field.required ? '<span class="chip required">Required</span>' : ''}
+      </div>
+      <input type="text" value="${currentValue}" data-key="${field.key}" />
+      <small>${field.label}${field.helper ? ' — ' + field.helper : ''}</small>
+    `;
+    wrapper.querySelector('input').addEventListener('input', (e) => {
+      envValues.set(field.key, e.target.value);
+      const nowMissing = field.required && !e.target.value.trim();
+      wrapper.classList.toggle('missing', nowMissing);
+      updatePreviews();
+    });
+    envForm.appendChild(wrapper);
+  });
+  updatePreviews();
+}
+
+function buildEnvPreview() {
+  const fields = collectEnvFields();
+  return fields
+    .map((field) => `${field.key}=${envValues.get(field.key) || field.defaultValue || ''}`)
+    .join('\n');
+}
+
+function buildServiceTemplates(state) {
+  const selections = state.selections;
+  const gpuHint = document.getElementById('gpuAcceleration').checked;
+  const templates = [];
+  const volumes = new Set();
+
+  if (selections.has('jellyfin')) {
+    templates.push(`  jellyfin:\n    image: jellyfin/jellyfin:${envRef('JELLYFIN_VERSION', 'latest')}\n    container_name: ${envRef('COMPOSE_PROJECT_NAME', 'm2')}-jellyfin\n    environment:\n      - TZ=${envRef('TZ')}\n      - PUID=${envRef('PUID')}\n      - PGID=${envRef('PGID')}\n    volumes:\n      - ${envRef('MEDIA_ROOT')}/config/jellyfin:/config\n      - ${envRef('MEDIA_ROOT')}/library:/media\n    networks:\n      - frontnet\n    ports:\n      - \"${envRef('JELLYFIN_HTTP_PORT', '8096')}:8096\"\n    ${gpuHint ? 'devices:\n      - /dev/dri:/dev/dri\n' : ''}    restart: unless-stopped\n    healthcheck:\n      test: [\"CMD\", \"curl\", \"-f\", \"http://localhost:8096/health\"]\n      interval: 30s\n      timeout: 5s\n      retries: 3`);
+  }
+
+  if (selections.has('sonarr')) {
+    templates.push(`  sonarr:\n    image: lscr.io/linuxserver/sonarr:${envRef('SONARR_VERSION', 'latest')}\n    environment:\n      - PUID=${envRef('PUID')}\n      - PGID=${envRef('PGID')}\n      - TZ=${envRef('TZ')}\n    volumes:\n      - ${envRef('DATA_ROOT')}/sonarr:/config\n      - ${envRef('MEDIA_ROOT')}/library:/library\n      - ${envRef('MEDIA_ROOT')}/downloads:/downloads\n    ports:\n      - \"${envRef('SONARR_PORT', '8989')}:8989\"\n    networks:\n      - frontnet\n      - downloadnet\n    depends_on:\n      - qbittorrent\n    restart: unless-stopped`);
+  }
+
+  if (selections.has('radarr')) {
+    templates.push(`  radarr:\n    image: lscr.io/linuxserver/radarr:${envRef('RADARR_VERSION', 'latest')}\n    environment:\n      - PUID=${envRef('PUID')}\n      - PGID=${envRef('PGID')}\n      - TZ=${envRef('TZ')}\n    volumes:\n      - ${envRef('DATA_ROOT')}/radarr:/config\n      - ${envRef('MEDIA_ROOT')}/library:/library\n      - ${envRef('MEDIA_ROOT')}/downloads:/downloads\n    ports:\n      - \"${envRef('RADARR_PORT', '7878')}:7878\"\n    networks:\n      - frontnet\n      - downloadnet\n    depends_on:\n      - qbittorrent\n    restart: unless-stopped`);
+  }
+
+  if (selections.has('qbittorrent')) {
+    templates.push(`  qbittorrent:\n    image: lscr.io/linuxserver/qbittorrent:${envRef('QBITTORRENT_VERSION', 'latest')}\n    environment:\n      - PUID=${envRef('PUID')}\n      - PGID=${envRef('PGID')}\n      - TZ=${envRef('TZ')}\n      - WEBUI_PORT=${envRef('QBITTORRENT_PORT', '8080')}\n    volumes:\n      - ${envRef('DATA_ROOT')}/qbittorrent:/config\n      - ${envRef('QBITTORRENT_DOWNLOADS', envRef('MEDIA_ROOT') + '/downloads')}:/downloads\n    ports:\n      - \"${envRef('QBITTORRENT_PORT', '8080')}:8080\"\n    networks:\n      - downloadnet\n    restart: unless-stopped`);
+  }
+
+  if (selections.has('nextcloud')) {
+    volumes.add('nextcloud_data');
+    templates.push(`  nextcloud:\n    image: nextcloud:${envRef('NEXTCLOUD_VERSION', 'latest')}\n    depends_on:\n      - postgres\n      - redis\n    environment:\n      - NEXTCLOUD_ADMIN_USER=${envRef('NEXTCLOUD_ADMIN_USER')}\n      - NEXTCLOUD_ADMIN_PASSWORD=${envRef('NEXTCLOUD_ADMIN_PASSWORD')}\n      - POSTGRES_PASSWORD=${envRef('POSTGRES_PASSWORD')}\n      - POSTGRES_HOST=postgres\n      - POSTGRES_DB=nextcloud\n      - POSTGRES_USER=nextcloud\n      - REDIS_HOST=redis\n      - REDIS_HOST_PASSWORD=${envRef('REDIS_PASSWORD')}\n      - TRUSTED_DOMAINS=${envRef('NEXTCLOUD_TRUSTED_DOMAINS')}\n    volumes:\n      - nextcloud_data:/var/www/html\n      - ${envRef('MEDIA_ROOT')}/library:/media:ro\n    networks:\n      - frontnet\n    ports:\n      - \"8443:80\"\n    restart: unless-stopped`);
+
+    templates.push(`  postgres:\n    image: postgres:15-alpine\n    environment:\n      - POSTGRES_DB=nextcloud\n      - POSTGRES_USER=nextcloud\n      - POSTGRES_PASSWORD=${envRef('POSTGRES_PASSWORD')}\n      - TZ=${envRef('TZ')}\n    volumes:\n      - postgres_data:/var/lib/postgresql/data\n    networks:\n      - frontnet\n    restart: unless-stopped`);
+    volumes.add('postgres_data');
+
+    templates.push(`  redis:\n    image: redis:7-alpine\n    command: redis-server --requirepass ${envRef('REDIS_PASSWORD')}\n    networks:\n      - frontnet\n    restart: unless-stopped`);
+  }
+
+  const authChoice = document.getElementById('authChoice').value;
+  if (authChoice === 'authelia') {
+    templates.push(`  authelia:\n    image: authelia/authelia:latest\n    volumes:\n      - ${envRef('DATA_ROOT')}/authelia:/config\n    environment:\n      - TZ=${envRef('TZ')}\n      - AUTHELIA_JWT_SECRET=${envRef('AUTHELIA_JWT_SECRET')}\n      - AUTHELIA_SESSION_SECRET=${envRef('AUTHELIA_SESSION_SECRET')}\n    networks:\n      - frontnet\n    restart: unless-stopped`);
+  } else if (authChoice === 'authentik') {
+    volumes.add('authentik_media');
+    templates.push(`  authentik:\n    image: ghcr.io/goauthentik/server:2023.10\n    environment:\n      - AUTHENTIK_SECRET_KEY=${envRef('AUTHENTIK_SECRET_KEY')}\n      - AUTHENTIK_POSTGRESQL__HOST=postgres\n      - AUTHENTIK_POSTGRESQL__USER=authentik\n      - AUTHENTIK_POSTGRESQL__NAME=authentik\n      - AUTHENTIK_POSTGRESQL__PASSWORD=${envRef('AUTHENTIK_POSTGRES_PASSWORD')}\n      - AUTHENTIK_REDIS__HOST=redis\n    depends_on:\n      - postgres\n      - redis\n    volumes:\n      - authentik_media:/media\n      - ${envRef('DATA_ROOT')}/authentik:/config\n    networks:\n      - frontnet\n    restart: unless-stopped`);
+  } else if (authChoice === 'oauth2-proxy') {
+    templates.push(`  oauth2-proxy:\n    image: quay.io/oauth2-proxy/oauth2-proxy:v7.5.1\n    environment:\n      - OAUTH2_PROXY_PROVIDER=google\n      - OAUTH2_PROXY_CLIENT_ID=${envRef('OAUTH2_PROXY_CLIENT_ID')}\n      - OAUTH2_PROXY_CLIENT_SECRET=${envRef('OAUTH2_PROXY_CLIENT_SECRET')}\n      - OAUTH2_PROXY_COOKIE_SECRET=${envRef('OAUTH2_PROXY_COOKIE_SECRET')}\n      - OAUTH2_PROXY_EMAIL_DOMAINS=*\n    ports:\n      - \"4180:4180\"\n    networks:\n      - frontnet\n    restart: unless-stopped`);
+  }
+
+  if (selections.has('cloudflare')) {
+    templates.push(`  cloudflared:\n    image: cloudflare/cloudflared:latest\n    command: tunnel run\n    environment:\n      - TUNNEL_TOKEN=${envRef('CLOUDFLARE_TUNNEL_TOKEN')}\n    networks:\n      - frontnet\n    restart: unless-stopped`);
+  }
+
+  if (selections.has('objectStorage')) {
+    volumes.add('minio_data');
+    templates.push(`  minio:\n    image: quay.io/minio/minio:latest\n    command: server /data --console-address :9001\n    environment:\n      - MINIO_ROOT_USER=${envRef('S3_ACCESS_KEY')}\n      - MINIO_ROOT_PASSWORD=${envRef('S3_SECRET_KEY')}\n    ports:\n      - \"9000:9000\"\n      - \"9001:9001\"\n    volumes:\n      - minio_data:/data\n    networks:\n      - frontnet\n    restart: unless-stopped`);
+  }
+
+  if (selections.has('observability')) {
+    volumes.add('prometheus_data');
+    volumes.add('grafana_data');
+    volumes.add('loki_data');
+    templates.push(`  prometheus:\n    image: prom/prometheus:latest\n    volumes:\n      - ${envRef('DATA_ROOT')}/prometheus.yml:/etc/prometheus/prometheus.yml:ro\n      - prometheus_data:/prometheus\n    networks:\n      - frontnet\n    restart: unless-stopped`);
+    templates.push(`  grafana:\n    image: grafana/grafana:10.3.1\n    environment:\n      - GF_SECURITY_ADMIN_USER=${envRef('GRAFANA_ADMIN_USER')}\n      - GF_SECURITY_ADMIN_PASSWORD=${envRef('GRAFANA_ADMIN_PASSWORD')}\n    volumes:\n      - grafana_data:/var/lib/grafana\n    ports:\n      - \"3000:3000\"\n    networks:\n      - frontnet\n    restart: unless-stopped`);
+    templates.push(`  loki:\n    image: grafana/loki:2.9.4\n    command: -config.file=/etc/loki/local-config.yaml\n    volumes:\n      - loki_data:/loki\n    networks:\n      - frontnet\n    restart: unless-stopped`);
+    templates.push(`  promtail:\n    image: grafana/promtail:2.9.4\n    command: -config.file=/etc/promtail/config.yml\n    volumes:\n      - /var/log:/var/log:ro\n    networks:\n      - frontnet\n    restart: unless-stopped`);
+  }
+
+  return { templates, volumes: Array.from(volumes) };
+}
+
+function buildComposePreview() {
+  const selections = getSelections();
+  const { templates, volumes } = buildServiceTemplates({ selections });
+  const composeParts = [
+    'version: "3.9"',
+    'services:',
+    templates.join('\n\n'),
+  ];
+
+  if (volumes.length) {
+    composeParts.push('volumes:');
+    volumes.forEach((vol) => composeParts.push(`  ${vol}: {}`));
+  }
+
+  composeParts.push('networks:\n  frontnet:\n    driver: bridge\n  downloadnet:\n    driver: bridge');
+
+  return composeParts.join('\n');
+}
+
+function updatePreviews() {
+  document.getElementById('envPreview').textContent = buildEnvPreview();
+  document.getElementById('composePreview').textContent = buildComposePreview();
+}
+
+function copyToClipboard(text) {
+  navigator.clipboard.writeText(text).then(() => {
+    alert('Copied to clipboard');
+  });
+}
+
+function downloadFile(filename, content) {
+  const blob = new Blob([content], { type: 'text/plain' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function wireActions() {
+  const profileBindings = [
+    { input: 'projectName', key: 'COMPOSE_PROJECT_NAME', fallback: 'm2' },
+    { input: 'baseDomain', key: 'BASE_DOMAIN', fallback: 'media.example.com' },
+    { input: 'timezone', key: 'TZ', fallback: 'UTC' },
+    { input: 'mediaPath', key: 'MEDIA_ROOT', fallback: '/srv/media' },
+    { input: 'dataPath', key: 'DATA_ROOT', fallback: '/srv/m2-data' },
+  ];
+
+  profileBindings.forEach(({ input, key, fallback }) => {
+    const el = document.getElementById(input);
+    el.value = envValues.get(key) || fallback;
+    envValues.set(key, el.value);
+    el.addEventListener('input', (event) => {
+      envValues.set(key, event.target.value);
+      updatePreviews();
+    });
+  });
+
+  document.getElementById('copyEnv').addEventListener('click', () => copyToClipboard(buildEnvPreview()));
+  document.getElementById('copyCompose').addEventListener('click', () => copyToClipboard(buildComposePreview()));
+  document.getElementById('downloadEnv').addEventListener('click', () => downloadFile('.env', buildEnvPreview()));
+  document.getElementById('downloadCompose').addEventListener('click', () => downloadFile('compose.yml', buildComposePreview()));
+
+  document.getElementById('authChoice').addEventListener('change', () => {
+    renderEnvForm();
+    updatePreviews();
+  });
+  const syncToggleToCatalog = (toggleId, serviceId) => {
+    document.getElementById(toggleId).addEventListener('change', (event) => {
+      const box = document.querySelector(`.catalog input[value="${serviceId}"]`);
+      if (box) box.checked = event.target.checked;
+      renderEnvForm();
+      updatePreviews();
+    });
+  };
+
+  syncToggleToCatalog('cloudflareTunnel', 'cloudflare');
+  syncToggleToCatalog('objectStorage', 'objectStorage');
+  document.getElementById('gpuAcceleration').addEventListener('change', updatePreviews);
+
+  document.getElementById('autoFill').addEventListener('click', () => {
+    document.getElementById('projectName').value = 'm2-stack';
+    document.getElementById('baseDomain').value = 'media.example.com';
+    document.getElementById('timezone').value = 'UTC';
+    document.getElementById('mediaPath').value = '/srv/media';
+    document.getElementById('dataPath').value = '/srv/m2-data';
+    baseEnvFields.forEach((field) => envValues.set(field.key, field.defaultValue || ''));
+    Object.values(authEnvFields).flat().forEach((field) => envValues.set(field.key, field.defaultValue || ''));
+    Object.values(optionalEnvFields).flat().forEach((field) => envValues.set(field.key, field.defaultValue || ''));
+    serviceCatalog.forEach((service) => service.env?.forEach((field) => envValues.set(field.key, field.defaultValue || '')));
+    renderEnvForm();
+  });
+}
+
+function bootstrap() {
+  baseEnvFields.forEach((field) => envValues.set(field.key, field.defaultValue || ''));
+  renderCatalog();
+  document.getElementById('cloudflareTunnel').checked = true;
+  document.getElementById('objectStorage').checked = false;
+  wireActions();
+  renderEnvForm();
+  updatePreviews();
+}
+
+document.addEventListener('DOMContentLoaded', bootstrap);
