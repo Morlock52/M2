@@ -19,12 +19,12 @@ This plan describes the interactive installer website we want for M2. The goal i
    - Nextcloud collaboration stack with Postgres and Redis.
    - Optional MinIO/S3 backend for object storage.
    - Prometheus/Grafana/Loki logging + metrics bundle.
-3. **Dynamic `.env` model** built from the chosen services with defaults and inline helper text.
+3. **Dynamic `.env` model** built from the chosen services with defaults, inline helper text, and user-managed saved variables.
 4. **Compose generator** that outputs a ready-to-save YAML with:
    - Networks separated for ingress and downloads.
    - Sensible healthchecks and resource hints.
    - Hooks for Cloudflare Tunnel routes and auth proxy.
-5. **Export actions** to copy or download the Compose and `.env` previews.
+5. **Export actions** to copy or download the Compose and `.env` previews plus a Markdown variable runbook.
 6. **Runbook snippets** summarizing the docker commands to execute.
 7. **Quality-of-life helpers** adopted from community feedback:
    - Quick-start template gallery highlighting stacks popular on social media.

@@ -78,7 +78,20 @@ This document explains how to operate the **M2 media stack + Nextcloud deploymen
 - **Discord**: Jellyfin, Authelia, Nextcloud, and Authentik official servers provide near-real-time support; check their 2024 office hours logs for migration tips.
 - **YouTube**: Channels such as *Lawrence Systems*, *Techno Tim*, and *DB Tech* continue to publish relevant homelab walkthroughs (latest playlists reviewed in Nov 2024).
 
-## 10. Verification / Testing Checklist
+## 10. Variable Runbook
+
+When you are happy with your selections in Steps 2–5:
+
+- Open the **.env builder** step.
+- Scroll to **Per-service variable notes** and jot down why each container is configured the way it is (domains, GPU choices, storage paths, auth decisions).
+- Click **Download variable runbook (.md)** to export a Markdown file (`variables.md`) that:
+  - Records your project profile (name, domains, paths).
+  - Lists each selected service and its main variables.
+  - Includes any notes you added.
+
+Keep this file next to your `.env` and `compose.yml` so future you (or teammates) can quickly understand what changed and why.
+
+## 11. Verification / Testing Checklist
 
 - [ ] `docker compose ps` shows all containers healthy.
 - [ ] `cloudflared tunnel info <name>` indicates active connectors.

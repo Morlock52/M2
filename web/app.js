@@ -2735,6 +2735,12 @@ let aiAssistantInstance = null;
 let insightsInitialized = false;
 let activeInsightPopover = null;
 let activeInsightTrigger = null;
+const USER_VAR_STORAGE_KEY = "m2-user-vars";
+let userVars = [];
+let editingUserVarId = null;
+const SERVICE_NOTES_STORAGE_KEY = "m2-service-notes";
+let serviceNotes = {};
+let activeEnvFieldKey = null;
 
 // Performance monitoring
 const perf = {
@@ -2757,14 +2763,376 @@ function envRef(name, fallback) {
   return "${" + name + (fallback ? ":-" + fallback + "}" : "}");
 }
 
+function yamlValue(value) {
+  if (value === undefined || value === null) return '""';
+  const str = String(value);
+  if (/^[\w./:-]+$/.test(str)) return str;
+  return JSON.stringify(str);
+}
+
+function escapeHtml(str = "") {
+  return String(str).replace(/[&<>"']/g, (char) => {
+    switch (char) {
+      case "&":
+        return "&amp;";
+      case "<":
+        return "&lt;";
+      case ">":
+        return "&gt;";
+      case '"':
+        return "&quot;";
+      case "'":
+        return "&#39;";
+      default:
+        return char;
+    }
+  });
+}
+
 function uniqueByKey(fields) {
   const map = new Map();
   fields.forEach((field) => {
-    if (!map.has(field.key)) {
-      map.set(field.key, field);
-    }
+    if (!field.key) return;
+    map.set(field.key, field);
   });
   return Array.from(map.values());
+}
+
+function loadServiceNotes() {
+  try {
+    const raw = localStorage.getItem(SERVICE_NOTES_STORAGE_KEY);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === "object" ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
+function persistServiceNotes() {
+  try {
+    localStorage.setItem(
+      SERVICE_NOTES_STORAGE_KEY,
+      JSON.stringify(serviceNotes),
+    );
+  } catch (error) {
+    console.warn("Unable to persist service notes:", error);
+  }
+}
+
+function loadStoredUserVars() {
+  try {
+    const raw = localStorage.getItem(USER_VAR_STORAGE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function persistUserVars() {
+  try {
+    localStorage.setItem(USER_VAR_STORAGE_KEY, JSON.stringify(userVars));
+  } catch (error) {
+    console.warn("Unable to persist user vars:", error);
+  }
+}
+
+function hydrateUserVarEnvValues() {
+  userVars.forEach((variable) => {
+    if (variable.includeInEnv && variable.key) {
+      envValues.set(
+        variable.key,
+        variable.value || envValues.get(variable.key) || "",
+      );
+    }
+  });
+}
+
+function renderUserVarSection() {
+  const select = document.getElementById("userVarSelect");
+  const list = document.getElementById("userVarList");
+  if (!select || !list) return;
+
+  select.innerHTML = '<option value="">Select saved variable…</option>';
+  userVars.forEach((variable) => {
+    if (!variable.key) return;
+    const option = document.createElement("option");
+    option.value = variable.id;
+    option.textContent = `${variable.key}${variable.name ? ` — ${variable.name}` : ""}`;
+    select.appendChild(option);
+  });
+
+  if (!userVars.length) {
+    list.innerHTML = '<p class="muted">No saved variables yet. Store API tokens or hostnames for reuse.</p>';
+    return;
+  }
+
+  list.innerHTML = userVars
+    .map(
+      (variable) => `
+      <article class="user-var-card" data-user-var="${variable.id}">
+        <div class="user-var-meta">
+          <h4>${escapeHtml(variable.name || variable.key)}</h4>
+          <code>${escapeHtml(variable.key)}</code>
+          ${
+            variable.description
+              ? `<p>${escapeHtml(variable.description)}</p>`
+              : "<p class=\"muted\">Ready for insertion.</p>"
+          }
+        </div>
+        <div class="user-var-flags">
+          <label class="toggle inline">
+            <input type="checkbox" data-user-var-id="${variable.id}" data-user-var-flag="includeInEnv" ${
+              variable.includeInEnv ? "checked" : ""
+            } />
+            <span>.env</span>
+          </label>
+          <label class="toggle inline">
+            <input type="checkbox" data-user-var-id="${variable.id}" data-user-var-flag="includeInCompose" ${
+              variable.includeInCompose ? "checked" : ""
+            } />
+            <span>compose</span>
+          </label>
+          <div class="user-var-actions">
+            <button type="button" data-edit-user-var="${variable.id}">Edit</button>
+            <button type="button" data-delete-user-var="${variable.id}">Remove</button>
+          </div>
+        </div>
+      </article>
+    `,
+    )
+    .join("");
+
+  list.querySelectorAll("input[data-user-var-flag]").forEach((input) => {
+    input.addEventListener("change", (event) => {
+      const { userVarFlag, userVarId } = event.target.dataset;
+      updateUserVarFlag(userVarId, userVarFlag, event.target.checked);
+    });
+  });
+
+  list.querySelectorAll("button[data-edit-user-var]").forEach((button) => {
+    button.addEventListener("click", () =>
+      openUserVarForm(button.dataset.editUserVar),
+    );
+  });
+
+  list.querySelectorAll("button[data-delete-user-var]").forEach((button) => {
+    button.addEventListener("click", () =>
+      deleteUserVar(button.dataset.deleteUserVar),
+    );
+  });
+}
+
+function openUserVarForm(id = null) {
+  const form = document.getElementById("userVarForm");
+  if (!form) return;
+  editingUserVarId = id;
+  const variable = userVars.find((entry) => entry.id === id);
+  document.getElementById("userVarLabel").value = variable?.name || "";
+  document.getElementById("userVarKey").value = variable?.key || "";
+  document.getElementById("userVarValue").value = variable?.value || "";
+  document.getElementById("userVarDescription").value =
+    variable?.description || "";
+  document.getElementById("userVarEnv").checked =
+    variable?.includeInEnv ?? true;
+  document.getElementById("userVarCompose").checked =
+    variable?.includeInCompose ?? false;
+  form.hidden = false;
+  form.scrollIntoView({ behavior: "smooth" });
+}
+
+function resetUserVarForm() {
+  const form = document.getElementById("userVarForm");
+  if (!form) return;
+  form.reset();
+  document.getElementById("userVarEnv").checked = true;
+  document.getElementById("userVarCompose").checked = false;
+  form.hidden = true;
+  editingUserVarId = null;
+}
+
+function handleUserVarSubmit(event) {
+  event.preventDefault();
+  const name = document.getElementById("userVarLabel").value.trim();
+  const key = document.getElementById("userVarKey").value.trim();
+  if (!key) {
+    showToast("Variable key is required", "error");
+    return;
+  }
+  const value = document.getElementById("userVarValue").value;
+  const description = document.getElementById("userVarDescription").value;
+  const includeInEnv = document.getElementById("userVarEnv").checked;
+  const includeInCompose = document.getElementById("userVarCompose").checked;
+  const payload = {
+    id:
+      editingUserVarId ||
+      (typeof crypto !== "undefined" && crypto.randomUUID
+        ? crypto.randomUUID()
+        : Date.now().toString()),
+    name,
+    key,
+    value,
+    description,
+    includeInEnv,
+    includeInCompose,
+  };
+
+  const existingIndex = userVars.findIndex((entry) => entry.id === payload.id);
+  if (existingIndex >= 0) {
+    userVars[existingIndex] = payload;
+    showToast(`Updated ${payload.key}`);
+  } else {
+    userVars.push(payload);
+    showToast(`Saved ${payload.key}`);
+  }
+
+  persistUserVars();
+  hydrateUserVarEnvValues();
+  renderUserVarSection();
+  renderEnvForm();
+  updatePreviews();
+  resetUserVarForm();
+}
+
+function updateUserVarFlag(id, field, isEnabled) {
+  const variable = userVars.find((entry) => entry.id === id);
+  if (!variable) return;
+  variable[field] = isEnabled;
+  persistUserVars();
+  if (field === "includeInEnv") {
+    if (isEnabled) {
+      envValues.set(variable.key, envValues.get(variable.key) || variable.value || "");
+    } else {
+      envValues.delete(variable.key);
+    }
+    renderEnvForm();
+  }
+  updatePreviews();
+}
+
+function deleteUserVar(id) {
+  const index = userVars.findIndex((entry) => entry.id === id);
+  if (index === -1) return;
+  const [removed] = userVars.splice(index, 1);
+  persistUserVars();
+  if (removed.includeInEnv) {
+    envValues.delete(removed.key);
+    renderEnvForm();
+  }
+  renderUserVarSection();
+  updatePreviews();
+  showToast(`Removed ${removed.key}`);
+  if (editingUserVarId === id) {
+    resetUserVarForm();
+  }
+}
+
+function applySelectedUserVar() {
+  const select = document.getElementById("userVarSelect");
+  if (!select || !select.value) {
+    showToast("Select a saved variable first", "warning");
+    return;
+  }
+  const variable = userVars.find((entry) => entry.id === select.value);
+  if (!variable) return;
+  const targetKey = activeEnvFieldKey || variable.key;
+  if (!variable.includeInEnv) {
+    variable.includeInEnv = true;
+    persistUserVars();
+  }
+  envValues.set(targetKey, variable.value || "");
+  if (activeEnvFieldKey) {
+    const targetInput = document.querySelector(
+      `.env-field input[data-key="${targetKey}"]`,
+    );
+    if (targetInput) {
+      targetInput.value = variable.value || "";
+    }
+  } else {
+    renderEnvForm();
+  }
+  updatePreviews();
+  renderUserVarSection();
+  showToast(`Inserted ${variable.key} into ${targetKey}`);
+  select.value = "";
+  if (activeEnvFieldKey) {
+    requestAnimationFrame(() => {
+      const targetInput = document.querySelector(
+        `.env-field input[data-key="${targetKey}"]`,
+      );
+      targetInput?.focus();
+    });
+  }
+}
+
+function initUserVarStorage() {
+  userVars = loadStoredUserVars();
+  hydrateUserVarEnvValues();
+  renderUserVarSection();
+}
+
+function renderServiceRunbook() {
+  const container = document.getElementById("serviceRunbook");
+  if (!container) return;
+
+  const selections = getSelections();
+  if (!selections.size) {
+    container.innerHTML =
+      '<p class="muted">Select at least one service in the stack step to record per-container notes.</p>';
+    return;
+  }
+
+  container.innerHTML = "";
+  serviceCatalog.forEach((service) => {
+    if (!selections.has(service.id)) return;
+    const note = serviceNotes[service.id]?.summary || "";
+    const envKeys = (service.env || []).map((field) => field.key);
+    const card = document.createElement("article");
+    card.className = "runbook-card";
+    card.innerHTML = `
+      <header class="runbook-card-head">
+        <div class="runbook-title">
+          <h4>${service.label}</h4>
+          <p class="muted">${service.description}</p>
+        </div>
+        ${
+          note
+            ? '<span class="chip saved" aria-label="Notes recorded">Recorded</span>'
+            : ""
+        }
+      </header>
+      ${
+        envKeys.length
+          ? `<ul class="runbook-var-list">${envKeys
+              .map((key) => `<li><code>${key}</code></li>`)
+              .join("")}</ul>`
+          : '<p class="muted">This service does not add extra variables in the builder.</p>'
+      }
+      <label class="field runbook-note-field">
+        <span>Notes & decisions</span>
+        <textarea rows="2" data-service-note="${service.id}" placeholder="Why you chose these values (GPU type, domains, storage layout, auth choice, etc.)">${escapeHtml(
+          note,
+        )}</textarea>
+      </label>
+    `;
+    container.appendChild(card);
+  });
+
+  container.querySelectorAll("textarea[data-service-note]").forEach((area) => {
+    area.addEventListener("input", (event) => {
+      const id = event.target.dataset.serviceNote;
+      serviceNotes[id] = serviceNotes[id] || {};
+      serviceNotes[id].summary = event.target.value;
+      persistServiceNotes();
+    });
+  });
+}
+
+function initServiceNotes() {
+  serviceNotes = loadServiceNotes();
+  renderServiceRunbook();
 }
 
 function applyDefaultEnvValues() {
@@ -2818,6 +3186,22 @@ function collectEnvFields() {
   });
   const authChoice = document.getElementById("authChoice").value;
   if (authEnvFields[authChoice]) fields.push(...authEnvFields[authChoice]);
+  userVars
+    .filter((variable) => variable.includeInEnv && variable.key)
+    .forEach((variable) => {
+      fields.push({
+        key: variable.key,
+        label: variable.name || variable.key,
+        defaultValue: variable.value || "",
+        required: false,
+        helper:
+          variable.description ||
+          (variable.includeInCompose
+            ? "Saved variable also exposed to compose."
+            : "Saved user variable."),
+        userManaged: true,
+      });
+    });
   return uniqueByKey(fields);
 }
 
@@ -2869,6 +3253,7 @@ function renderCatalog() {
       renderEnvForm();
       updatePreviews();
       updateCoverageSummary();
+      renderServiceRunbook();
       const toggleIds = toggleMap[service.id];
       if (toggleIds) {
         toggleIds.forEach((id) => {
@@ -2892,19 +3277,34 @@ function renderEnvForm() {
     const currentValue = envValues.get(field.key) || "";
     const wrapper = document.createElement("div");
     const isMissing = field.required && !currentValue.trim();
-    wrapper.className = `env-field${isMissing ? " missing" : ""}`;
+    wrapper.className = `env-field${isMissing ? " missing" : ""}${
+      field.key === activeEnvFieldKey ? " active" : ""
+    }`;
+    const chips = [];
+    if (field.required) chips.push('<span class="chip required">Required</span>');
+    if (field.userManaged) chips.push('<span class="chip saved">Saved</span>');
     wrapper.innerHTML = `
       <div class="env-label">
         <label>${field.key}${field.required ? " *" : ""}</label>
-        ${field.required ? '<span class="chip required">Required</span>' : ""}
+        ${chips.join("")}
       </div>
-      <input type="text" value="${currentValue}" data-key="${field.key}" />
+      <input type="text" value="${escapeHtml(currentValue)}" data-key="${field.key}" />
       <small>${field.label}${field.helper ? " — " + field.helper : ""}</small>
     `;
     const inputEl = wrapper.querySelector("input");
     if (field.helper) {
       inputEl.title = field.helper;
     }
+    inputEl.addEventListener("focus", () => {
+      activeEnvFieldKey = field.key;
+      document
+        .querySelectorAll(".env-field.active")
+        .forEach((node) => node.classList.remove("active"));
+      wrapper.classList.add("active");
+    });
+    inputEl.addEventListener("blur", () => {
+      wrapper.classList.remove("active");
+    });
     inputEl.addEventListener("input", (e) => {
       envValues.set(field.key, e.target.value);
       const nowMissing = field.required && !e.target.value.trim();
@@ -3061,7 +3461,19 @@ function buildServiceTemplates(state) {
 function buildComposePreview() {
   const selections = getSelections();
   const { templates, volumes } = buildServiceTemplates({ selections });
-  const composeParts = ['version: "3.9"', "services:", templates.join("\n\n")];
+  const composeParts = ['version: "3.9"'];
+  const composeVars = userVars.filter(
+    (variable) => variable.includeInCompose && variable.key,
+  );
+  if (composeVars.length) {
+    composeParts.push("x-user-vars:");
+    composeVars.forEach((variable) => {
+      composeParts.push(
+        `  ${variable.key}: ${yamlValue(variable.value || "")}`,
+      );
+    });
+  }
+  composeParts.push("services:", templates.join("\n\n"));
 
   if (volumes.length) {
     composeParts.push("volumes:");
@@ -3073,6 +3485,70 @@ function buildComposePreview() {
   );
 
   return composeParts.join("\n");
+}
+
+function buildVariableRunbookMarkdown() {
+  const timestamp = new Date().toISOString();
+  const selections = getSelections();
+  const selectedServices = serviceCatalog.filter((svc) =>
+    selections.has(svc.id),
+  );
+  const getEnv = (key, fallback = "") =>
+    envValues.get(key) || fallback || "";
+
+  let md = `# M2 Variable Runbook\n\nGenerated at ${timestamp}\n\n`;
+
+  md += "## Project profile\n\n";
+  md += `- Project name: \`${getEnv("COMPOSE_PROJECT_NAME", "m2")}\`\n`;
+  md += `- Base domain: \`${getEnv("BASE_DOMAIN", "media.example.com")}\`\n`;
+  md += `- Timezone: \`${getEnv("TZ", "UTC")}\`\n`;
+  md += `- Media root: \`${getEnv("MEDIA_ROOT", "/srv/media")}\`\n`;
+  md += `- Data root: \`${getEnv("DATA_ROOT", "/srv/m2-data")}\`\n\n`;
+
+  if (selectedServices.length) {
+    md += "## Per-service variables\n\n";
+    selectedServices.forEach((service) => {
+      const note = serviceNotes[service.id]?.summary || "";
+      md += `### ${service.label}\n\n`;
+      if (note) {
+        md += `${note}\n\n`;
+      }
+      const envFields = service.env || [];
+      if (!envFields.length) {
+        md += "_This service does not define extra variables in the builder._\n\n";
+        return;
+      }
+      md += "| Variable | Value | Notes |\n";
+      md += "| --- | --- | --- |\n";
+      envFields.forEach((field) => {
+        const value = getEnv(field.key, field.defaultValue || "");
+        const cellValue = String(value).replace(/\|/g, "\\|").replace(/\n/g, " ");
+        const cellNote = (field.helper || "").replace(/\|/g, "\\|");
+        md += `| \`${field.key}\` | \`${cellValue}\` | ${cellNote} |\n`;
+      });
+      md += "\n";
+    });
+  }
+
+  const composeVars = userVars.filter(
+    (variable) => variable.includeInCompose && variable.key,
+  );
+  if (composeVars.length) {
+    md += "## User-defined x-user-vars\n\n";
+    md += "| Key | Value | In .env? |\n";
+    md += "| --- | --- | --- |\n";
+    composeVars.forEach((variable) => {
+      const cellValue = String(variable.value || "")
+        .replace(/\|/g, "\\|")
+        .replace(/\n/g, " ");
+      md += `| \`${variable.key}\` | \`${cellValue}\` | ${
+        variable.includeInEnv ? "yes" : "no"
+      } |\n`;
+    });
+    md += "\n";
+  }
+
+  return md;
 }
 
 // Debounced preview updates for performance
@@ -3282,6 +3758,11 @@ function wireActions() {
     .addEventListener("click", () =>
       downloadFile("compose.yml", buildComposePreview()),
     );
+  document
+    .getElementById("downloadRunbook")
+    ?.addEventListener("click", () =>
+      downloadFile("variables.md", buildVariableRunbookMarkdown(), "text/markdown"),
+    );
 
   document.getElementById("authChoice").addEventListener("change", () => {
     renderEnvForm();
@@ -3294,6 +3775,28 @@ function wireActions() {
   document
     .getElementById("gpuAcceleration")
     .addEventListener("change", updatePreviews);
+
+  const userVarForm = document.getElementById("userVarForm");
+  if (userVarForm) {
+    userVarForm.addEventListener("submit", handleUserVarSubmit);
+  }
+  document
+    .getElementById("toggleUserVarForm")
+    ?.addEventListener("click", () => {
+      const form = document.getElementById("userVarForm");
+      if (!form) return;
+      if (form.hidden) {
+        openUserVarForm();
+      } else {
+        resetUserVarForm();
+      }
+    });
+  document
+    .getElementById("cancelUserVar")
+    ?.addEventListener("click", resetUserVarForm);
+  document
+    .getElementById("applyUserVar")
+    ?.addEventListener("click", applySelectedUserVar);
 
   document
     .getElementById("autoFill")
@@ -3351,10 +3854,11 @@ function wireActions() {
           box.checked = shouldCheck;
           box.dispatchEvent(new Event("change", { bubbles: true }));
         }
-      });
+    });
 
     renderEnvForm();
     updateCoverageSummary();
+    renderServiceRunbook();
     goToStep(4);
   });
 }
@@ -3410,6 +3914,7 @@ function bootstrap() {
     // Original bootstrap code with error handling
     try {
       applyDefaultEnvValues();
+      initUserVarStorage();
       renderCatalog();
       mountTemplateGallery();
       renderFileTypeGuide();
@@ -3428,6 +3933,8 @@ function bootstrap() {
       initAIAssistant();
       renderEnvForm();
       updateCoverageSummary();
+      initServiceNotes();
+      renderServiceRunbook();
       updatePreviews();
     } catch (error) {
       console.error('Core bootstrap failed:', error);

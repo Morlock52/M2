@@ -29,6 +29,22 @@
   box-sizing: border-box;
 }
 
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
+
+.muted {
+  color: var(--muted);
+  margin: 0;
+}
+
 body {
   margin: 0;
   background: 
@@ -438,6 +454,175 @@ body {
 
 .toggle[data-insight] .field-insight-popover {
   top: 36px;
+}
+
+.card-subsection {
+  margin-bottom: 24px;
+}
+
+.user-vars {
+  background: rgba(15, 23, 42, 0.65);
+  border: 1px solid var(--glass-border);
+  border-radius: calc(var(--radius) - 6px);
+  padding: 20px;
+  box-shadow:
+    0 6px 20px rgba(0, 0, 0, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.user-vars-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  align-items: flex-start;
+}
+
+.user-vars-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.user-var-select {
+  min-width: 220px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--glass-border);
+  border-radius: calc(var(--radius) - 8px);
+  padding: 8px 12px;
+  color: var(--text);
+}
+
+.user-var-form {
+  margin-top: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding-top: 16px;
+}
+
+.user-var-switches {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin: 12px 0;
+}
+
+.user-var-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.user-var-list {
+  margin-top: 16px;
+  display: grid;
+  gap: 12px;
+}
+
+.user-var-card {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: calc(var(--radius) - 6px);
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.02);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.user-var-meta h4 {
+  margin: 0;
+}
+
+.user-var-meta code {
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.08);
+  font-size: 0.85rem;
+}
+
+.user-var-flags {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.user-var-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.user-var-actions button {
+  padding: 6px 10px;
+  font-size: 0.85rem;
+  border-radius: 8px;
+}
+
+.runbook-head {
+  margin-top: 24px;
+  margin-bottom: 16px;
+  padding: 16px 18px;
+  border-radius: calc(var(--radius) - 6px);
+  background: linear-gradient(120deg, rgba(56, 189, 248, 0.14), rgba(15, 23, 42, 0.9));
+  border: 1px solid rgba(56, 189, 248, 0.4);
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: center;
+}
+
+.runbook-head h3 {
+  margin: 0 0 4px;
+}
+
+.service-runbook {
+  display: grid;
+  gap: 14px;
+  margin-top: 8px;
+}
+
+.runbook-card {
+  border-radius: calc(var(--radius) - 6px);
+  border: 1px solid var(--glass-border);
+  background: rgba(15, 23, 42, 0.9);
+  padding: 16px;
+  box-shadow:
+    0 4px 16px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.runbook-card-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.runbook-title h4 {
+  margin: 0;
+}
+
+.runbook-var-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 10px;
+  padding: 0;
+  list-style: none;
+}
+
+.runbook-var-list li code {
+  padding: 2px 8px;
+  border-radius: 8px;
+  background: rgba(15, 23, 42, 0.9);
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  font-size: 12px;
+}
+
+.runbook-note-field textarea {
+  resize: vertical;
 }
 
 .toggle {
@@ -1026,6 +1211,12 @@ button:focus-visible {
   border-color: rgba(248, 113, 113, 0.4);
 }
 
+.chip.saved {
+  background: rgba(56, 189, 248, 0.15);
+  color: #bae6fd;
+  border-color: rgba(56, 189, 248, 0.4);
+}
+
 .env-field.missing {
   border-color: rgba(248, 113, 113, 0.7);
   background: rgba(248, 113, 113, 0.05);
@@ -1034,6 +1225,13 @@ button:focus-visible {
 
 .env-field.missing input {
   border-color: rgba(248, 113, 113, 0.7);
+}
+
+.env-field.active {
+  border-color: var(--accent);
+  box-shadow:
+    0 0 0 2px rgba(56, 189, 248, 0.25),
+    inset 0 2px 6px rgba(0, 0, 0, 0.3);
 }
 
 .env-field.missing small {

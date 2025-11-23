@@ -39,6 +39,12 @@ else
     echo "❌ Template gallery placeholder missing"
 fi
 
+if echo "$HTML_CONTENT" | grep -q "userVarSelect"; then
+    echo "✅ User variable storage select present"
+else
+    echo "❌ User variable storage select missing"
+fi
+
 if echo "$HTML_CONTENT" | grep -q "app.js"; then
     echo "✅ JavaScript file referenced"
 else

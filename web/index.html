@@ -232,6 +232,70 @@
             <code>m2-shared-token</code> and can be reused by Overseerr,
             Prowlarr, and your automation scripts when connecting services.
           </div>
+          <section class="user-vars card-subsection" aria-labelledby="userVarsHeading">
+            <div class="user-vars-head">
+              <div>
+                <p class="eyebrow">Saved inputs</p>
+                <h3 id="userVarsHeading">User variable storage</h3>
+                <p>Keep API tokens or hostnames handy, then reuse them in the .env or even inside the compose YAML.</p>
+              </div>
+              <div class="user-vars-actions">
+                <label class="sr-only" for="userVarSelect">Saved variables</label>
+                <select id="userVarSelect" class="user-var-select">
+                  <option value="">Select saved variable…</option>
+                </select>
+                <button id="applyUserVar" class="ghost" type="button">Insert into .env</button>
+                <button id="toggleUserVarForm" class="primary" type="button">Add variable</button>
+              </div>
+              <p class="muted">Tip: click into any .env field first, then use the dropdown to drop in a saved value.</p>
+            </div>
+            <form id="userVarForm" class="user-var-form" hidden>
+              <div class="grid two-col">
+                <label class="field">
+                  <span>Label</span>
+                  <input type="text" id="userVarLabel" placeholder="Cloudflare API token" />
+                </label>
+                <label class="field">
+                  <span>Key</span>
+                  <input type="text" id="userVarKey" placeholder="CF_API_TOKEN" />
+                </label>
+              </div>
+              <label class="field">
+                <span>Value</span>
+                <textarea id="userVarValue" rows="2" placeholder="Copy the secret or slug here"></textarea>
+              </label>
+              <label class="field">
+                <span>Description</span>
+                <textarea id="userVarDescription" rows="2" placeholder="Where this variable is used"></textarea>
+              </label>
+              <div class="user-var-switches">
+                <label class="toggle inline">
+                  <input type="checkbox" id="userVarEnv" checked />
+                  <span>Include in .env</span>
+                </label>
+                <label class="toggle inline">
+                  <input type="checkbox" id="userVarCompose" />
+                  <span>Expose under compose x-user-vars</span>
+                </label>
+              </div>
+              <div class="user-var-form-actions">
+                <button type="button" class="ghost" id="cancelUserVar">Cancel</button>
+                <button type="submit" class="primary">Save variable</button>
+              </div>
+            </form>
+            <div id="userVarList" class="user-var-list" aria-live="polite"></div>
+          </section>
+          <section class="card-subsection" id="variableRunbook" aria-labelledby="variableRunbookHeading">
+            <div class="runbook-head">
+              <div>
+                <p class="eyebrow">Runbook</p>
+                <h3 id="variableRunbookHeading">Per-service variable notes</h3>
+                <p>Capture why each container is configured the way it is. These notes are included in a Markdown runbook you can keep next to your compose files.</p>
+              </div>
+              <button id="downloadRunbook" class="primary" type="button">Download variable runbook (.md)</button>
+            </div>
+            <div id="serviceRunbook" class="service-runbook" aria-live="polite"></div>
+          </section>
           <div id="envForm" class="env-form"></div>
           <pre id="envPreview" class="preview"></pre>
           <div class="panel-nav">

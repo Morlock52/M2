@@ -11,6 +11,8 @@ The `web/` directory contains **M2 Installer Studio**, a single-page app that no
 - **Field insights + popover tips** for every profile/toggle input, summarizing what the social/self-hosted crowd was recommending on 11/25/2024.
 - **Progress ring + background particles** to keep you oriented through the seven-step wizard without reloading the page.
 - **AI Configuration Assistant** anchored to the bottom-right of the screen for quick reminders sourced from popular homelab discussions.
+- **User variable storage** so you can save API tokens/hostnames once, drop them into the `.env` via a quick-select dropdown, and optionally expose them under `x-user-vars` in the generated compose file.
+- **Per-service variable runbook** that lets you jot notes per container and download a Markdown runbook capturing your current `.env` values and decisions.
 
 Use the **Load sample stack** button in Step 1 to preload a representative plan
 with Jellyfin, Radarr/Sonarr/qBittorrent, Prowlarr, subtitle and request
