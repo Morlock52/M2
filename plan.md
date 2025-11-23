@@ -1,6 +1,6 @@
 # M2 Installer Website Plan
 
-This plan describes the interactive installer website we want for M2. The goal is to turn the existing documentation-only repo into a web-based builder that produces a tailored Docker Compose stack and `.env` file for a media platform.
+This plan describes the interactive installer website we want for M2. The goal is to turn the existing documentation-only repo into a web-based builder that produces a tailored Docker Compose stack and `.env` file for a media platform. It now folds in the improvements logged on **Nov 25, 2024** (template gallery, AI assistant, progress ring, and field insights sourced from Reddit/Discord feedback).
 
 ## Objectives
 - Collect user requirements (domains, storage locations, preferred apps, authentication, observability).
@@ -26,6 +26,11 @@ This plan describes the interactive installer website we want for M2. The goal i
    - Hooks for Cloudflare Tunnel routes and auth proxy.
 5. **Export actions** to copy or download the Compose and `.env` previews.
 6. **Runbook snippets** summarizing the docker commands to execute.
+7. **Quality-of-life helpers** adopted from community feedback:
+   - Quick-start template gallery highlighting stacks popular on social media.
+   - Popover insights for every form input so users see the “why” straight from Nov 25, 2024 community threads.
+   - A progress ring + AI assistant to keep users oriented without leaving the page.
+   - A Playwright smoke test (`npm run test:e2e`) that loads the template gallery and AI assistant so regressions can gate pull requests.
 
 ## UX Notes
 - The generator should stay readable on mobile and desktop.

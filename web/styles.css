@@ -61,6 +61,18 @@ body {
   align-items: flex-end;
 }
 
+.progress-ring-mount {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+}
+
 .theme-selector {
   display: flex;
   flex-direction: column;
@@ -374,6 +386,58 @@ body {
 
 .field small {
   color: var(--muted);
+}
+
+.field[data-insight],
+.toggle[data-insight] {
+  position: relative;
+  padding-right: 44px;
+}
+
+.field-insight-trigger {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid var(--glass-border);
+  background: rgba(56, 189, 248, 0.15);
+  color: var(--text);
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--transition);
+}
+
+.field-insight-trigger:hover,
+.field-insight-trigger:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+  background: rgba(56, 189, 248, 0.3);
+  transform: scale(1.05);
+}
+
+.field-insight-popover {
+  position: absolute;
+  top: 48px;
+  right: 0;
+  max-width: 260px;
+  padding: 12px;
+  border-radius: calc(var(--radius) - 6px);
+  background: rgba(15, 23, 42, 0.95);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  color: var(--text);
+  font-size: 0.85rem;
+  line-height: 1.4;
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.35);
+  z-index: 5;
+}
+
+.toggle[data-insight] .field-insight-popover {
+  top: 36px;
 }
 
 .toggle {
@@ -715,11 +779,8 @@ button:focus-visible {
 }
 
 .progress-ring {
-  position: fixed;
-  top: 80px;
-  left: 20px;
-  z-index: 10;
-  pointer-events: none;
+  width: 60px;
+  height: 60px;
 }
 
 .progress-circle {

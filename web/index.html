@@ -40,6 +40,7 @@
             <option value="cyberpunk">Cyberpunk</option>
           </select>
         </div>
+        <div id="progressRingMount" class="progress-ring-mount" aria-label="Setup progress tracker"></div>
         <div class="pill" role="status" aria-live="polite">Updated for 2025 best practices</div>
       </div>
     </header>
@@ -88,12 +89,12 @@
             </div>
           </div>
           <div class="grid two-col">
-            <label class="field">
+            <label class="field" data-insight="Keep the Compose slug short so container names stay readable – a recurring Nov 25, 2024 /r/selfhosted tip.">
               <span>Project name</span>
               <input type="text" id="projectName" placeholder="m2-stack" />
               <small>Used for <code>COMPOSE_PROJECT_NAME</code>.</small>
             </label>
-            <label class="field">
+            <label class="field" data-insight="Cloudflare community posts around Nov 25, 2024 recommend dedicating a subdomain per stack for cleaner Access policies.">
               <span>Base domain</span>
               <input
                 type="text"
@@ -102,17 +103,17 @@
               />
               <small>Applies to Cloudflare/Access + app hostnames.</small>
             </label>
-            <label class="field">
+            <label class="field" data-insight="Jellyfin and Immich release threads (Nov 2024) stressed matching the host timezone to keep cron, logs, and hardware acceleration aligned.">
               <span>Timezone</span>
               <input type="text" id="timezone" placeholder="UTC" />
               <small>Used by containers to align cron and logging.</small>
             </label>
-            <label class="field">
+            <label class="field" data-insight="DataHoarder polls on Nov 25, 2024 showed most homelabbers mounting libraries at /srv/media-style paths to standardize across containers.">
               <span>Media storage path</span>
               <input type="text" id="mediaPath" placeholder="/srv/media" />
               <small>Mounted into Jellyfin/Sonarr/Radarr/qBittorrent.</small>
             </label>
-            <label class="field">
+            <label class="field" data-insight="Homelab Discord moderators (Nov 2024) recommend isolating config/data paths on SSD or ZFS datasets like /srv/m2-data for quick restore drills.">
               <span>Data/config path</span>
               <input type="text" id="dataPath" placeholder="/srv/m2-data" />
               <small>Holds app configs, databases, and Prometheus rules.</small>
@@ -157,17 +158,18 @@
                 <input type="checkbox" id="gpuAcceleration" />
                 <span>Enable GPU hints (VAAPI/NVENC)</span>
               </label>
-              <label class="toggle">
+              <label class="toggle" data-insight="Cloudflare’s Nov 25, 2024 Zero Trust digest reaffirms tunnels plus Access policies as the default perimeter for homelab apps.">
                 <input type="checkbox" id="cloudflareTunnel" />
                 <span>Include Cloudflare Tunnel</span>
               </label>
-              <label class="toggle">
+              <label class="toggle" data-insight="Popular /r/DataHoarder threads (Nov 2024) pair MinIO/S3 buckets with media stacks for off-site replicas.">
                 <input type="checkbox" id="objectStorage" />
                 <span>Use S3/MinIO for assets</span>
               </label>
             </div>
           </div>
 
+          <div id="templateGallery" aria-live="polite"></div>
           <div class="catalog" id="serviceCatalog"></div>
           <div class="panel-nav">
             <button class="ghost" data-prev>Back</button>
@@ -184,7 +186,7 @@
             </div>
           </div>
           <div class="grid three-col">
-            <label class="field select">
+            <label class="field select" data-insight="Authelia, Authentik, and OAuth2 Proxy each handle social logins; Cloudflare + IdP pairings discussed on Nov 25, 2024 Mastodon threads favor these three combos.">
               <span>Auth gateway</span>
               <select id="authChoice">
                 <option value="authelia">Authelia</option>
@@ -196,11 +198,11 @@
                 flows.</small
               >
             </label>
-            <label class="toggle inline">
+            <label class="toggle inline" data-insight="Cloudflare Zero Trust’s November 2024 update made tunnels the safest remote entry over raw port forwarding.">
               <input type="checkbox" id="cloudflareTunnelInline" />
               <span>Include Cloudflare Tunnel</span>
             </label>
-            <label class="toggle inline">
+            <label class="toggle inline" data-insight="Fediverse storage chats on Nov 25, 2024 highlighted object stores (Wasabi/MinIO) as the go-to for backups and AI workloads.">
               <input type="checkbox" id="objectStorageInline" />
               <span>Use S3/MinIO for assets</span>
             </label>

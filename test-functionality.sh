@@ -27,6 +27,18 @@ else
     echo "❌ Advanced Mode button missing"
 fi
 
+if echo "$HTML_CONTENT" | grep -q "progressRingMount"; then
+    echo "✅ Progress ring mount present"
+else
+    echo "❌ Progress ring mount missing"
+fi
+
+if echo "$HTML_CONTENT" | grep -q "templateGallery"; then
+    echo "✅ Template gallery placeholder found"
+else
+    echo "❌ Template gallery placeholder missing"
+fi
+
 if echo "$HTML_CONTENT" | grep -q "app.js"; then
     echo "✅ JavaScript file referenced"
 else
@@ -78,6 +90,12 @@ else
     echo "❌ Service catalog missing"
 fi
 
+if echo "$JS_CONTENT" | grep -q "nextcloud"; then
+    echo "✅ Nextcloud service wiring detected"
+else
+    echo "❌ Nextcloud service wiring missing"
+fi
+
 if echo "$JS_CONTENT" | grep -q "const fileTypeGuides"; then
     echo "✅ File type guides found"
 else
@@ -88,6 +106,12 @@ if echo "$JS_CONTENT" | grep -q "const baseEnvFields"; then
     echo "✅ Base environment fields found"
 else
     echo "❌ Base environment fields missing"
+fi
+
+if echo "$JS_CONTENT" | grep -q "AI Assistant"; then
+    echo "✅ AI assistant entry point present in JS"
+else
+    echo "❌ AI assistant entry point missing from JS"
 fi
 
 echo "=================================="

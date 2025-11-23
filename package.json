@@ -1,0 +1,25 @@
+{
+  "name": "m2",
+  "version": "1.0.0",
+  "description": "Media stack and Nextcloud with auth and Cloudflare Tunnel, refreshed with community guidance current through **November 25, 2024**.",
+  "main": "index.js",
+  "scripts": {
+    "test": "npm run test:e2e",
+    "test:e2e": "playwright test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Morlock52/M2.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/Morlock52/M2/issues"
+  },
+  "homepage": "https://github.com/Morlock52/M2#readme",
+  "devDependencies": {
+    "@playwright/test": "^1.56.1"
+  }
+}

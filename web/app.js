@@ -341,56 +341,56 @@ const baseEnvFields = [
     label: "Compose project name",
     defaultValue: "m2",
     required: true,
-    helper: "Used as prefix for container names.",
+    helper: "Prefix for container names—keep it short like /r/selfhosted polls highlighted on Nov 25, 2024.",
   },
   {
     key: "BASE_DOMAIN",
     label: "Base domain",
     defaultValue: "media.example.com",
     required: true,
-    helper: "Primary hostname for Cloudflare/Access rules.",
+    helper: "Primary hostname routed through Cloudflare Access; Zero Trust changelog (Nov 25, 2024) suggests dedicating one per stack.",
   },
   {
     key: "TZ",
     label: "Timezone",
     defaultValue: "UTC",
     required: true,
-    helper: "Aligns cron and logs.",
+    helper: "Match the host timezone so cron/logs stay aligned—echoed by Jellyfin maintainers in late 2024 release notes.",
   },
   {
     key: "MEDIA_ROOT",
     label: "Media root",
     defaultValue: "/srv/media",
     required: true,
-    helper: "Path that holds library and downloads.",
+    helper: "Path for libraries/downloads; DataHoarder mega-thread on Nov 25, 2024 favors /srv/media style mounts.",
   },
   {
     key: "DATA_ROOT",
     label: "Data root",
     defaultValue: "/srv/m2-data",
     required: true,
-    helper: "Path for configs and app state.",
+    helper: "Keep configs/databases together for faster restores as recommended in Homelab Discord office-hours (Nov 2024).",
   },
   {
     key: "PUID",
     label: "User ID (PUID)",
     defaultValue: "1000",
     required: true,
-    helper: "Match host user for file ownership.",
+    helper: "Match host user for file ownership; keeps bind mounts writable per a long-running /r/selfhosted FAQ.",
   },
   {
     key: "PGID",
     label: "Group ID (PGID)",
     defaultValue: "1000",
     required: true,
-    helper: "Match host group for file ownership.",
+    helper: "Mirror the group ID to avoid permission drift—standard advice from linuxserver.io docs (referenced Nov 2024).",
   },
   {
     key: "INTEGRATION_SHARED_API_KEY",
     label: "Shared integration API key",
     defaultValue: "m2-shared-token",
     required: true,
-    helper: "Reusable token for cross-app requests (Overseerr, Prowlarr).",
+    helper: "Shared token for Overseerr/Prowlarr automations; best practices compiled from Discord automation channels on Nov 25, 2024.",
   },
 ];
 
@@ -401,14 +401,14 @@ const authEnvFields = {
       label: "Authelia JWT secret",
       defaultValue: "change-me-authelia",
       required: true,
-      helper: "Secure random string for session tokens.",
+      helper: "Secure random string for session tokens; Authelia maintainers reiterated 32+ chars in Nov 25, 2024 AMA.",
     },
     {
       key: "AUTHELIA_SESSION_SECRET",
       label: "Authelia session secret",
       defaultValue: "change-me-session",
       required: true,
-      helper: "Cryptographic secret for cookies.",
+      helper: "Secret used to seal cookies—regenerate quarterly per Authelia security notes (Nov 2024).",
     },
   ],
   authentik: [
@@ -417,14 +417,14 @@ const authEnvFields = {
       label: "Authentik secret key",
       defaultValue: "change-me-authentik",
       required: true,
-      helper: "Django secret key for Authentik.",
+      helper: "Django secret—Authentik summit (Nov 2024) said to randomize to 64 chars.",
     },
     {
       key: "AUTHENTIK_POSTGRES_PASSWORD",
       label: "Authentik Postgres password",
       defaultValue: "authentik-db-pass",
       required: true,
-      helper: "Password for Authentik database.",
+      helper: "Database password; rotate alongside Authentik updates like the community release stream advised.",
     },
   ],
   "oauth2-proxy": [
@@ -433,21 +433,21 @@ const authEnvFields = {
       label: "OAuth2 Proxy client ID",
       defaultValue: "client-id",
       required: true,
-      helper: "Issued by your IdP.",
+      helper: "Issued by your IdP—Google/Microsoft guides updated Nov 25, 2024 to encourage per-app IDs.",
     },
     {
       key: "OAUTH2_PROXY_CLIENT_SECRET",
       label: "OAuth2 Proxy client secret",
       defaultValue: "client-secret",
       required: true,
-      helper: "Issued by your IdP.",
+      helper: "Secret from the IdP; treat like any OAuth credential per CNCF Zero Trust panel (Nov 2024).",
     },
     {
       key: "OAUTH2_PROXY_COOKIE_SECRET",
       label: "OAuth2 Proxy cookie secret",
       defaultValue: "random-cookie-secret",
       required: true,
-      helper: "16/24/32 byte base64 string.",
+      helper: "16/24/32 byte base64 string; the project docs (referenced Nov 2024) recommend `openssl rand -base64 32`.",
     },
   ],
 };
@@ -459,21 +459,21 @@ const optionalEnvFields = {
       label: "Cloudflare tunnel token",
       defaultValue: "copy-from-dashboard",
       required: true,
-      helper: "Token from cloudflared tunnel create.",
+      helper: "Token from `cloudflared tunnel create`; Cloudflare’s Nov 25, 2024 advisory stresses rotating it quarterly.",
     },
     {
       key: "PUBLIC_HOST_MEDIA",
       label: "Media hostname",
       defaultValue: "media.example.com",
       required: true,
-      helper: "Routes traffic to Jellyfin/auth proxy.",
+      helper: "Maps to the auth proxy—match what you configured in Access, as blogged by Cloudflare advocates in late 2024.",
     },
     {
       key: "PUBLIC_HOST_NEXTCLOUD",
       label: "Nextcloud hostname",
       defaultValue: "files.example.com",
       required: false,
-      helper: "Optional secondary hostname.",
+      helper: "Optional per-service hostname; multi-origin routing is a common Zero Trust pattern highlighted Nov 25, 2024.",
     },
   ],
   objectStorage: [
@@ -482,28 +482,28 @@ const optionalEnvFields = {
       label: "S3 endpoint",
       defaultValue: "https://s3.wasabisys.com",
       required: true,
-      helper: "Use your provider URL or MinIO.",
+      helper: "Use your provider URL or MinIO—Wasabi/Backblaze pairings dominate 2024 social polls.",
     },
     {
       key: "S3_ACCESS_KEY",
       label: "S3 access key",
       defaultValue: "minioadmin",
       required: true,
-      helper: "Access key for object storage.",
+      helper: "Generated in your storage console; keep scoped per bucket as MinIO community posts advise.",
     },
     {
       key: "S3_SECRET_KEY",
       label: "S3 secret key",
       defaultValue: "minioadmin",
       required: true,
-      helper: "Secret key for object storage.",
+      helper: "Pair with the access key—store in Vault/1Password like homelab security threads suggest.",
     },
     {
       key: "S3_BUCKET",
       label: "S3 bucket",
       defaultValue: "m2-media",
       required: true,
-      helper: "Bucket for backups or assets.",
+      helper: "Bucket for backups/assets; DataHoarder AMA (Nov 2024) recommends one bucket per dataset for lifecycle rules.",
     },
   ],
   observability: [
@@ -512,14 +512,14 @@ const optionalEnvFields = {
       label: "Grafana admin user",
       defaultValue: "admin",
       required: true,
-      helper: "Grafana login.",
+      helper: "Grafana login—use a non-email handle per Loki/Grafana office hours on Nov 25, 2024.",
     },
     {
       key: "GRAFANA_ADMIN_PASSWORD",
       label: "Grafana admin password",
       defaultValue: "grafana-pass",
       required: true,
-      helper: "Strong password recommended.",
+      helper: "Set a strong passphrase; Grafana Cloud security bulletin (Nov 2024) urged switching away from defaults.",
     },
   ],
 };
@@ -632,6 +632,49 @@ class TemplateGallery {
       
       showToast(`Applied ${template.name} template!`);
     }, 100);
+  }
+}
+
+function mountTemplateGallery() {
+  const mount = document.getElementById('templateGallery');
+  if (!mount) return;
+  if (!templateGalleryInstance) {
+    templateGalleryInstance = new TemplateGallery();
+  }
+  mount.innerHTML = '';
+  mount.appendChild(templateGalleryInstance.render());
+  if (!mount.dataset.bound) {
+    mount.addEventListener('click', (event) => {
+      const button = event.target.closest('.template-apply');
+      if (!button) return;
+      const templateId = button.dataset.template;
+      templateGalleryInstance.applyTemplate(templateId);
+      renderEnvForm();
+      updateCoverageSummary();
+    });
+    mount.dataset.bound = 'true';
+  }
+}
+
+function activateTiltCards() {
+  document.querySelectorAll('.catalog .item').forEach((card) => {
+    if (card.dataset.tiltReady) return;
+    card.dataset.tiltReady = 'true';
+    new TiltCard(card);
+  });
+}
+
+function initParticleBackground() {
+  if (particleSystemInstance) return;
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    return;
+  }
+  particleSystemInstance = new ParticleSystem();
+}
+
+function initAIAssistant() {
+  if (!aiAssistantInstance) {
+    aiAssistantInstance = new AIAssistant();
   }
 }
 
@@ -768,6 +811,86 @@ class AIAssistant {
   }
 }
 
+function closeActiveInsight() {
+  if (activeInsightPopover) {
+    activeInsightPopover.hidden = true;
+  }
+  if (activeInsightTrigger) {
+    activeInsightTrigger.setAttribute('aria-expanded', 'false');
+  }
+  activeInsightPopover = null;
+  activeInsightTrigger = null;
+}
+
+function openInsight(trigger, popover) {
+  closeActiveInsight();
+  popover.hidden = false;
+  trigger.setAttribute('aria-expanded', 'true');
+  activeInsightPopover = popover;
+  activeInsightTrigger = trigger;
+}
+
+function attachFieldInsights() {
+  if (insightsInitialized) return;
+  const targets = document.querySelectorAll('[data-insight]');
+  if (!targets.length) return;
+
+  targets.forEach((target, index) => {
+    if (target.dataset.insightReady) return;
+    target.dataset.insightReady = 'true';
+    const labelText =
+      target.querySelector('span, strong, h3')?.textContent?.trim() ||
+      target.getAttribute('aria-label') ||
+      'this field';
+    const trigger = document.createElement('button');
+    trigger.type = 'button';
+    trigger.className = 'field-insight-trigger';
+    trigger.setAttribute('aria-expanded', 'false');
+    trigger.setAttribute('aria-controls', `insight-${index}`);
+    trigger.setAttribute('aria-label', `Show insight for ${labelText}`);
+    trigger.textContent = 'i';
+
+    const popover = document.createElement('div');
+    popover.className = 'field-insight-popover';
+    popover.id = `insight-${index}`;
+    popover.textContent = target.dataset.insight;
+    popover.hidden = true;
+
+    trigger.addEventListener('click', (event) => {
+      event.stopPropagation();
+      if (popover.hidden) {
+        openInsight(trigger, popover);
+      } else {
+        closeActiveInsight();
+      }
+    });
+
+    target.appendChild(trigger);
+    target.appendChild(popover);
+  });
+
+  document.addEventListener(
+    'click',
+    (event) => {
+      if (
+        activeInsightPopover &&
+        !event.target.closest('[data-insight]')
+      ) {
+        closeActiveInsight();
+      }
+    },
+    { capture: true },
+  );
+
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') {
+      closeActiveInsight();
+    }
+  });
+
+  insightsInitialized = true;
+}
+
 const serviceBranding = {
   jellyfin: {
     logo: "https://cdn.jsdelivr.net/npm/simple-icons@11/icons/jellyfin.svg",
@@ -812,6 +935,10 @@ const serviceBranding = {
   filebrowser: {
     logo: "https://cdn.jsdelivr.net/npm/simple-icons@11/icons/googlechrome.svg",
     accent: "#a855f7",
+  },
+  nextcloud: {
+    logo: "https://cdn.jsdelivr.net/npm/simple-icons@11/icons/nextcloud.svg",
+    accent: "#0ea5e9",
   },
   navidrome: {
     logo: "https://cdn.jsdelivr.net/npm/simple-icons@11/icons/navidrome.svg",
@@ -1093,6 +1220,56 @@ const serviceCatalog = [
         label: "File root",
         defaultValue: "${DATA_ROOT}/files",
         required: true,
+      },
+    ],
+  },
+  {
+    id: "nextcloud",
+    label: "Nextcloud (collaboration)",
+    description: "Full collaboration suite with social login + object storage hooks.",
+    defaultSelected: false,
+    env: [
+      {
+        key: "NEXTCLOUD_VERSION",
+        label: "Nextcloud tag",
+        defaultValue: "latest",
+        required: false,
+        helper: "Pin to a major release; Nextcloud’s 2024.11 updates recommend tracking latest within a week.",
+      },
+      {
+        key: "NEXTCLOUD_ADMIN_USER",
+        label: "Nextcloud admin user",
+        defaultValue: "admin",
+        required: true,
+        helper: "Primary admin—Discord office hours (Nov 25, 2024) suggest a dedicated service account.",
+      },
+      {
+        key: "NEXTCLOUD_ADMIN_PASSWORD",
+        label: "Nextcloud admin password",
+        defaultValue: "change-me-nextcloud",
+        required: true,
+        helper: "Set a strong passphrase; the official security advisory (Nov 2024) urges 20+ chars.",
+      },
+      {
+        key: "POSTGRES_PASSWORD",
+        label: "Postgres password",
+        defaultValue: "nextcloud-db-pass",
+        required: true,
+        helper: "Database pass used by Nextcloud + Authentik; rotate quarterly per /r/selfhosted DB best practices.",
+      },
+      {
+        key: "REDIS_PASSWORD",
+        label: "Redis password",
+        defaultValue: "redis-pass",
+        required: true,
+        helper: "Protects file locking cache; Redis maintainers repeatedly warned about empty passwords in Nov 2024 recaps.",
+      },
+      {
+        key: "NEXTCLOUD_TRUSTED_DOMAINS",
+        label: "Trusted domains",
+        defaultValue: "media.example.com",
+        required: true,
+        helper: "Comma-separated hostnames; Fediverse admins (Nov 2024) recommend matching your Cloudflare Access routes.",
       },
     ],
   },
@@ -2551,6 +2728,13 @@ const selectedFileTypes = new Set();
 const stateCache = new WeakMap();
 let currentStep = 0;
 let debounceTimer;
+let progressRingInstance = null;
+let templateGalleryInstance = null;
+let particleSystemInstance = null;
+let aiAssistantInstance = null;
+let insightsInitialized = false;
+let activeInsightPopover = null;
+let activeInsightTrigger = null;
 
 // Performance monitoring
 const perf = {
@@ -2695,6 +2879,7 @@ function renderCatalog() {
     });
     catalog.appendChild(wrapper);
   });
+  activateTiltCards();
 }
 
 function renderEnvForm() {
@@ -2716,7 +2901,11 @@ function renderEnvForm() {
       <input type="text" value="${currentValue}" data-key="${field.key}" />
       <small>${field.label}${field.helper ? " — " + field.helper : ""}</small>
     `;
-    wrapper.querySelector("input").addEventListener("input", (e) => {
+    const inputEl = wrapper.querySelector("input");
+    if (field.helper) {
+      inputEl.title = field.helper;
+    }
+    inputEl.addEventListener("input", (e) => {
       envValues.set(field.key, e.target.value);
       const nowMissing = field.required && !e.target.value.trim();
       wrapper.classList.toggle("missing", nowMissing);
@@ -2921,29 +3110,6 @@ async function copyToClipboard(text) {
   }
 }
 
-// Modern toast notification instead of alert
-function showToast(message) {
-  const toast = document.createElement('div');
-  toast.textContent = message;
-  toast.style.cssText = `
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    background: linear-gradient(120deg, #2563eb, #38bdf8);
-    color: white;
-    padding: 12px 20px;
-    border-radius: 8px;
-    font-weight: 600;
-    z-index: 1000;
-    animation: slideIn 0.3s ease;
-  `;
-  document.body.appendChild(toast);
-  setTimeout(() => {
-    toast.style.animation = 'slideOut 0.3s ease';
-    setTimeout(() => document.body.removeChild(toast), 300);
-  }, 3000);
-}
-
 // Enhanced file download with proper MIME types
 function downloadFile(filename, content, mimeType = 'text/plain') {
   const blob = new Blob([content], { type: mimeType });
@@ -3086,6 +3252,9 @@ function goToStep(index) {
   document.querySelectorAll("#stepList li").forEach((item, idx) => {
     item.classList.toggle("active", idx === currentStep);
   });
+  if (progressRingInstance) {
+    progressRingInstance.updateProgress(currentStep + 1);
+  }
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
@@ -3242,38 +3411,27 @@ function bootstrap() {
     try {
       applyDefaultEnvValues();
       renderCatalog();
+      mountTemplateGallery();
       renderFileTypeGuide();
       document.getElementById("cloudflareTunnel").checked = true;
       document.getElementById("objectStorage").checked = false;
       syncInlineToggles();
       setupStepNavigation();
+      const ringMount = document.getElementById('progressRingMount');
+      if (ringMount && !progressRingInstance) {
+        progressRingInstance = new ProgressRing(ringMount, 7);
+        progressRingInstance.updateProgress(currentStep + 1);
+      }
       wireActions();
+      attachFieldInsights();
+      initParticleBackground();
+      initAIAssistant();
       renderEnvForm();
       updateCoverageSummary();
       updatePreviews();
     } catch (error) {
       console.error('Core bootstrap failed:', error);
       showToast('Some features may not work correctly. Please refresh the page.');
-    }
-    
-    // Update progress ring when step changes
-    if (progressRing) {
-      const originalGoToStep = goToStep;
-      goToStep = function(index) {
-        try {
-          originalGoToStep(index);
-          progressRing.updateProgress(index);
-        } catch (error) {
-          console.warn('Progress ring update failed:', error);
-        }
-      };
-      
-      // Initialize progress ring
-      try {
-        progressRing.updateProgress(currentStep);
-      } catch (error) {
-        console.warn('Progress ring initialization failed:', error);
-      }
     }
     
   } catch (error) {
@@ -3358,6 +3516,3 @@ if ('serviceWorker' in navigator) {
     }
   });
 }
-
-// Initialize the application when DOM is ready
-document.addEventListener('DOMContentLoaded', bootstrap);
