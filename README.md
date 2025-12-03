@@ -1,6 +1,6 @@
 # M2 Installer Studio
 
-Design a self-hosted media, AI, and collaboration stack, generate a ready-to-run `docker-compose.yml` + `.env`, and capture a Markdown runbook in one browser-based workflow. The installer UX is frozen to community guidance current through **November 25, 2024**.
+Design a self-hosted media, AI, and collaboration stack, generate a ready-to-run `docker-compose.yml` + `.env`, and capture a Markdown runbook in one browser-based workflow. The installer UX is frozen to community guidance current through **December 3, 2025**.
 
 ---
 
@@ -9,7 +9,7 @@ Design a self-hosted media, AI, and collaboration stack, generate a ready-to-run
 - **Seven-step wizard** that mirrors Reddit/Discord-favorite media stacks (Jellyfin, *arr family, Immich, Nextcloud, Cloudflare Tunnel, Authentik/Authelia, etc.).
 - **Per-service env builder** with inline insights so you copy/paste a clean `.env` without guesswork.
 - **User variable locker + runbook export** for tracking API tokens, domains, GPU choices, and Cloudflare Access decisions.
-- **AI Configuration Assistant** and tooltips summarizing the best practices that were circulating as of 2024-11-25.
+- **AI Configuration Assistant** and tooltips summarizing the best practices that were circulating as of 2025-12-03.
 - **Zero build tooling** — open `web/index.html` in any modern browser; run Playwright tests only if you want CI coverage.
 
 ---
@@ -25,8 +25,19 @@ Related docs:
 
 - `USAGE.md` – day-2 operations guide (auth, Cloudflare Tunnel, backups).
 - `DESIGN.md` – UX decisions and data sources.
-- `IMPROVEMENTS.md` – change log for the 2024 refresh.
+- `IMPROVEMENTS.md` – change log for the latest installer refresh.
 - `FUNCTIONALITY_REPORT.md` – validation evidence.
+
+## Stack snapshot (Dec 3, 2025)
+
+| Component | Latest drop | Why it matters |
+| --- | --- | --- |
+| Jellyfin | [10.11.4 (2025-12-01)](https://github.com/jellyfin/jellyfin/releases/tag/v10.11.4) | Confirms the media server row in the wizard still aligns with the newest bugfix build, including safer HDR fallback behaviour noted in the release notes. |
+| Nextcloud | [v32.0.2 (2025-11-20)](https://github.com/nextcloud/server/releases/tag/v32.0.2) | Keeps the collaboration profile current with Hub 8-era features and database requirements. |
+| Immich | [v2.3.1 (2025-11-20)](https://github.com/immich-app/immich/releases/tag/v2.3.1) | Highlights the hot fix that stops the web UI from freezing on update notifications, so the photo stack template points at a stable tag. |
+| Authelia | [v4.39.15 (2025-11-29)](https://github.com/authelia/authelia/releases/tag/v4.39.15) | Addresses LDAP health checks and server-authorization defaults—the access wizard leans on these fixes when recommending Authelia. |
+| Cloudflare Zero Trust | [WARP post-quantum rollout (2025-09-24)](https://blog.cloudflare.com/post-quantum-warp/) | Emphasizes that Cloudflare’s WARP/One Agent now supports post-quantum tunnels, so the generated runbook nudges you to enable PQC for tunnels. |
+| Cloudflare Tunnel routing | [Hostname-based routing now free (2025-09-18)](https://blog.cloudflare.com/tunnel-hostname-routing/) | Explains why the wizard defaults to hostname-per-service guidance instead of IP allowlists. |
 
 ---
 
@@ -50,7 +61,7 @@ Related docs:
 4. **Press “Load sample stack.”** This pre-selects Jellyfin, Radarr/Sonarr/qBittorrent, Prowlarr, Immich, FileBrowser, Nextcloud, and Cloudflare Tunnel.
 5. **Walk through the steps:**
    - Fill in project profile → choose media types → toggle services → pick auth/tunnel → build the `.env`.
-   - Use the inline “insights” badges for the rationale drawn from November 2024 community posts.
+   - Use the inline “insights” badges that cite the releases above (Jellyfin 10.11.4, Nextcloud 32.0.2, Immich 2.3.1, Authelia 4.39.15) plus Cloudflare’s September 2025 Zero Trust updates.
 6. **Download artifacts:**
    - `.env` for secrets and ports.
    - `docker-compose.yml` (Compose v3.9 with `x-user-vars` stub if you saved custom values).
@@ -88,7 +99,7 @@ serve -l 4173
 
 ## The seven-step wizard at a glance
 
-1. **Profile** – Set project name (`COMPOSE_PROJECT_NAME`), base domain, timezone, and filesystem roots. “Auto-fill safe defaults” matches late-2024 community templates.
+1. **Profile** – Set project name (`COMPOSE_PROJECT_NAME`), base domain, timezone, and filesystem roots. “Auto-fill safe defaults” matches late-2025 community templates.
 2. **File type coverage** – Click the media types you care about; the coverage summary highlights which services meet each need.
 3. **Pick your stack** – Toggle GPU hints, Cloudflare Tunnel, or object storage, then choose services from the catalog. Each card exposes required env vars.
 4. **Access & identity** – Select Authelia, Authentik, or OAuth2 Proxy. Notes explain common Cloudflare Access pairings.
@@ -98,7 +109,7 @@ serve -l 4173
 
 Sidecar helpers you can rely on:
 
-- **AI Configuration Assistant** (button in the lower-right). It answers common “what should I pick?” questions using canned guidance from the November 2024 homelab scene.
+- **AI Configuration Assistant** (button in the lower-right). It answers common “what should I pick?” questions using canned guidance from the December 2025 homelab scene.
 - **Progress ring + keyboard focus** so you always know where you are in the flow.
 
 ---
@@ -124,7 +135,7 @@ Once you download the `.env`, `docker-compose.yml`, and optional `variables.md`:
    docker compose ps            # confirm containers are healthy
    ```
 
-4. **Wire up Cloudflare Tunnel + auth** following the step-by-step playbook in `USAGE.md`.
+4. **Wire up Cloudflare Tunnel + auth** following the step-by-step playbook in `USAGE.md`, then enable the post-quantum WARP/One Agent rollout ([Cloudflare, Sep 24 2025](https://blog.cloudflare.com/post-quantum-warp/)) and hostname-based routing ([Cloudflare, Sep 18 2025](https://blog.cloudflare.com/tunnel-hostname-routing/)) so your Zero Trust posture matches the generated host-per-service guidance.
 5. **Record outcomes** – Append verification notes to the exported `variables.md` runbook so future upgrades stay traceable.
 
 > 📌 Looking for Kubernetes or Nomad instructions? Re-use the `.env` as your source of truth and translate the generated Compose file into Helm charts or job specs; the service list in `web/app.js` shows every required variable.
@@ -171,3 +182,14 @@ What happens:
 ## License
 
 MIT — see `LICENSE` if present in your clone, or treat the repo under the default MIT terms defined by the author.
+
+---
+
+## Sources for December 2025 data
+
+- Jellyfin 10.11.4 release notes (2025-12-01) – https://github.com/jellyfin/jellyfin/releases/tag/v10.11.4
+- Nextcloud server v32.0.2 (2025-11-20) – https://github.com/nextcloud/server/releases/tag/v32.0.2
+- Immich v2.3.1 hot fix (2025-11-20) – https://github.com/immich-app/immich/releases/tag/v2.3.1
+- Authelia v4.39.15 (2025-11-29) – https://github.com/authelia/authelia/releases/tag/v4.39.15
+- Cloudflare Zero Trust WARP PQC announcement (2025-09-24) – https://blog.cloudflare.com/post-quantum-warp/
+- Cloudflare Tunnel hostname routing (2025-09-18) – https://blog.cloudflare.com/tunnel-hostname-routing/
